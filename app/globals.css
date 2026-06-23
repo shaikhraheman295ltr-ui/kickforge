@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+  --background: #0A0A0F;
+  --surface: #12121A;
+  --surface-2: #1E1E2A;
+  --accent: #8B5CF6;
+  --accent-2: #EC4899;
+  --accent-3: #6EE7B7;
+  --ink: #FFFFFF;
+  --muted: #6B7280;
+  --border: rgba(255,255,255,0.06);
+  --glass: rgba(255,255,255,0.04);
+
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  --ease-kick: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out-kick: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 0.3s;
+  --duration-mid: 0.6s;
+  --duration-slow: 1.2s;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: auto; -webkit-font-smoothing: antialiased; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--background);
+  color: var(--ink);
+  overflow-x: hidden;
+}
+
+main {
+  scroll-snap-type: y proximity;
+  scroll-behavior: smooth;
+}
+
+#featured, #explore, #sale, #cta {
+  scroll-snap-align: start;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 2px; }
+
+::selection { background: var(--accent); color: #fff; }
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+}
+
+.glow-accent { box-shadow: 0 0 20px rgba(139,92,246,0.15), 0 0 60px rgba(139,92,246,0.05); }
+.glow-red { box-shadow: 0 0 20px rgba(236,72,153,0.2), 0 0 60px rgba(236,72,153,0.08); }
+
+.magnetic-area { position: relative; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
