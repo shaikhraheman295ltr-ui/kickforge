@@ -6,6 +6,7 @@ import CustomCursor from "@/components/CustomCursor";
 import Preloader from "@/components/Preloader";
 import FloatingNav from "@/components/FloatingNav";
 import HeroSection from "@/components/HeroSection";
+import V2Section from "@/components/V2Section";
 import FeaturedSection from "@/components/FeaturedSection";
 import ExploreSection from "@/components/ExploreSection";
 import SaleSection from "@/components/SaleSection";
@@ -44,15 +45,14 @@ export default function Home() {
       <CartSidebar />
       <AtmosphereLayer type="dust" opacity={0.08} speed={0.2} />
       <main className="relative z-10">
-        <div id="hero-root" style={{ height: "500vh", position: "relative", marginTop: "40px" }}>
-          <HeroSection />
-        </div>
+        <HeroSection />
         <FeaturedSection />
         <StatsSection />
         <ExploreSection />
         <SaleSection />
         <AutoPlayFrames />
         <FinalCTA />
+        <V2Section />
         <Footer />
       </main>
     </>
