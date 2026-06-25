@@ -15,31 +15,38 @@ function AutoPlayer({ folder, frames: total, speed = 1, label, prefix = "frame_"
   const animRef = useRef<number>(0);
   const idxRef = useRef(0);
   const imagesRef = useRef<HTMLImageElement[]>([]);
+  const visibleRef = useRef(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     if (prefersReducedMotion()) return;
 
+    const obs = new IntersectionObserver(([e]) => { visibleRef.current = e.isIntersecting; }, { threshold: 0 });
+    obs.observe(canvas);
+
     const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
     resize();
     window.addEventListener("resize", resize);
 
+    const onVisibility = () => { if (!document.hidden) return; };
+    document.addEventListener("visibilitychange", onVisibility);
+
     const pad = (n: number) => String(n).padStart(3, "0");
-    const loaded: HTMLImageElement[] = [];
-    let loadedCount = 0;
+    const loaded: HTMLImageElement[] = new Array(total);
+    imagesRef.current = loaded;
 
     for (let i = 0; i < total; i++) {
       const img = new Image();
-      img.onload = () => { loadedCount++; if (loadedCount === total) imagesRef.current = loaded; };
-      img.onerror = () => { loadedCount++; };
+      img.onload = () => { loaded[i] = img; };
+      img.onerror = () => {};
       img.src = `/frames/${folder}/${prefix}${pad(i + 1)}.jpg`;
-      loaded.push(img);
+      loaded[i] = img;
     }
 
     let speedFactor = speed;
     const draw = () => {
-      if (loadedCount >= total && imagesRef.current.length > 0) {
+      if (!document.hidden && visibleRef.current) {
         const idx = Math.floor(idxRef.current) % total;
         const img = imagesRef.current[idx];
         if (img && img.complete && img.naturalWidth > 0) {
@@ -56,7 +63,7 @@ function AutoPlayer({ folder, frames: total, speed = 1, label, prefix = "frame_"
       animRef.current = requestAnimationFrame(draw);
     };
     animRef.current = requestAnimationFrame(draw);
-    return () => { cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
+    return () => { obs.disconnect(); cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
   }, [folder, total, speed]);
 
   return (
