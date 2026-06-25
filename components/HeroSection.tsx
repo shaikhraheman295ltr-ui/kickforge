@@ -3,13 +3,12 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { prefersReducedMotion } from "@/lib/utils";
 
-const FOLDERS = ["v1", "v2"];
-const FRAMES_PER_FOLDER = 150;
-const TOTAL_FRAMES = FOLDERS.length * FRAMES_PER_FOLDER;
+const FOLDER = "v1";
+const FRAMES = 247;
+const BATCH = 6;
 
-const pad = (n: number) => String(n).padStart(3, "0");
-const frameUrl = (folderIdx: number, frameIdx: number) =>
-  `/frames/${FOLDERS[folderIdx]}/frame_${pad(frameIdx + 1)}.jpg`;
+const pad = (n: number) => String(n + 1).padStart(5, "0");
+const frameUrl = (index: number) => `/frames/${FOLDER}/frame${pad(index)}.jpg`;
 
 const COPY_SEQUENCE = [
   { text: "KICKFORGE",           type: "brand",  start: 0,  end: 20 },
@@ -25,7 +24,7 @@ export default function HeroSection() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const copyRefs = useRef<(HTMLDivElement | null)[]>([]);
   const finalRef = useRef<HTMLDivElement>(null);
-  const images = useRef<(HTMLImageElement | null)[]>(new Array(TOTAL_FRAMES).fill(null));
+  const images = useRef<(HTMLImageElement | null)[]>(new Array(FRAMES).fill(null));
   const currentFrame = useRef(0);
   const autoSpinRef = useRef<number>(0);
   const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,39 +38,36 @@ export default function HeroSection() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     const { width: cw, height: ch } = canvas;
-    const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
-    const sw = img.naturalWidth * scale, sh = img.naturalHeight * scale;
     ctx.clearRect(0, 0, cw, ch);
-    ctx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+    ctx.drawImage(img, 0, 0, cw, ch);
   }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; drawFrame(currentFrame.current); };
+    const cap = 1280;
+    const resize = () => { canvas.width = Math.min(window.innerWidth, cap); canvas.height = Math.min(window.innerHeight, cap * 0.5625); drawFrame(currentFrame.current); };
     resize();
     window.addEventListener("resize", resize);
 
     let loaded = 0, cancelled = false;
 
-    const loadImage = (absIdx: number): Promise<void> => {
-      const folderIdx = Math.floor(absIdx / FRAMES_PER_FOLDER);
-      const frameIdx = absIdx % FRAMES_PER_FOLDER;
+    const loadImage = (index: number): Promise<void> => {
       return new Promise(resolve => {
-        if (cancelled || images.current[absIdx]) { resolve(); return; }
+        if (cancelled || images.current[index]) { resolve(); return; }
         const img = new Image();
         img.onload = () => {
           if (cancelled) { resolve(); return; }
-          images.current[absIdx] = img;
+          images.current[index] = img;
           loaded++;
-          const pct = Math.round((loaded / TOTAL_FRAMES) * 100);
+          const pct = Math.round((loaded / FRAMES) * 100);
           setLoadProgress(pct);
           window.dispatchEvent(new CustomEvent("hero-progress", { detail: { percent: pct } }));
-          if (absIdx === currentFrame.current) drawFrame(absIdx);
+          if (index === currentFrame.current) drawFrame(index);
           resolve();
         };
         img.onerror = () => resolve();
-        img.src = frameUrl(folderIdx, frameIdx);
+        img.src = frameUrl(index);
       });
     };
 
@@ -79,11 +75,15 @@ export default function HeroSection() {
       await loadImage(0);
       drawFrame(0);
 
-      const coarse = Array.from({ length: Math.ceil(TOTAL_FRAMES / 10) }, (_, k) => k * 10);
+      const coarse = Array.from({ length: Math.ceil(FRAMES / 12) }, (_, k) => k * 12);
       if (!cancelled) await Promise.all(coarse.map(loadImage));
 
-      for (let i = 0; i < TOTAL_FRAMES && !cancelled; i++) {
-        await loadImage(i);
+      for (let batch = 1; batch < FRAMES && !cancelled; batch += BATCH) {
+        const jobs = [];
+        for (let j = batch; j < Math.min(batch + BATCH, FRAMES); j++) {
+          if (!images.current[j]) jobs.push(loadImage(j));
+        }
+        if (jobs.length > 0) await Promise.all(jobs);
       }
     };
     preload();
@@ -101,13 +101,13 @@ export default function HeroSection() {
       ScrollTrigger.create({
         trigger: wrapper, start: "top top", end: "bottom bottom", scrub: true,
         onUpdate: (self) => {
-          const target = Math.min(Math.floor(self.progress * (TOTAL_FRAMES - 1)), TOTAL_FRAMES - 1);
+          const target = Math.min(Math.floor(self.progress * (FRAMES - 1)), FRAMES - 1);
           let best = target;
           if (!images.current[target]) {
-            for (let o = 1; o < TOTAL_FRAMES; o++) {
+            for (let o = 1; o < FRAMES; o++) {
               const lo = target - o, hi = target + o;
               if (lo >= 0 && images.current[lo]) { best = lo; break; }
-              if (hi < TOTAL_FRAMES && images.current[hi]) { best = hi; break; }
+              if (hi < FRAMES && images.current[hi]) { best = hi; break; }
             }
           }
           if (best !== currentFrame.current) { currentFrame.current = best; drawFrame(best); }
@@ -125,7 +125,7 @@ export default function HeroSection() {
       if (finalRef.current) {
         gsap.fromTo(finalRef.current, { opacity: 0, y: 80 }, {
           opacity: 1, y: 0, ease: "power3.out",
-          scrollTrigger: { trigger: wrapper, start: "55% top", end: "75% top", scrub: true },
+          scrollTrigger: { trigger: wrapper, start: "75% top", end: "92% top", scrub: true },
         });
       }
     }, section);
@@ -133,35 +133,33 @@ export default function HeroSection() {
     return () => ctx.revert();
   }, [drawFrame]);
 
-  // 360° auto-spin on idle
+  // slow idle rotation
   useEffect(() => {
     if (prefersReducedMotion()) return;
-    let forward = true;
-    const startSpin = () => {
-      cancelAnimationFrame(autoSpinRef.current);
-      const spin = () => {
-        const step = forward ? 1 : -1;
-        let next = currentFrame.current + step;
-        if (next >= TOTAL_FRAMES || next < 0) { forward = !forward; next = currentFrame.current + (forward ? 1 : -1); }
-        if (next >= 0 && next < TOTAL_FRAMES && images.current[next]) {
-          currentFrame.current = next;
-          drawFrame(next);
-        }
-        autoSpinRef.current = requestAnimationFrame(spin);
-      };
+    let forward = true, tick = 0;
+    const spin = () => {
+      tick++;
+      if (tick % 3 !== 0) { autoSpinRef.current = requestAnimationFrame(spin); return; }
+      const step = forward ? 1 : -1;
+      let next = currentFrame.current + step;
+      if (next >= FRAMES || next < 0) { forward = !forward; next = currentFrame.current + (forward ? 1 : -1); }
+      if (next >= 0 && next < FRAMES && images.current[next]) {
+        currentFrame.current = next;
+        drawFrame(next);
+      }
       autoSpinRef.current = requestAnimationFrame(spin);
     };
 
     const onScroll = () => {
       scrollingRef.current = true;
-      cancelAnimationFrame(autoSpinRef.current);
+      if (autoSpinRef.current) cancelAnimationFrame(autoSpinRef.current);
       if (idleRef.current) clearTimeout(idleRef.current);
-      idleRef.current = setTimeout(() => { scrollingRef.current = false; startSpin(); }, 3000);
+      idleRef.current = setTimeout(() => { scrollingRef.current = false; autoSpinRef.current = requestAnimationFrame(spin); }, 4000);
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    idleRef.current = setTimeout(startSpin, 3000);
-    return () => { window.removeEventListener("scroll", onScroll); cancelAnimationFrame(autoSpinRef.current); if (idleRef.current) clearTimeout(idleRef.current); };
+    idleRef.current = setTimeout(() => { autoSpinRef.current = requestAnimationFrame(spin); }, 4000);
+    return () => { window.removeEventListener("scroll", onScroll); if (autoSpinRef.current) cancelAnimationFrame(autoSpinRef.current); if (idleRef.current) clearTimeout(idleRef.current); };
   }, [drawFrame]);
 
   useEffect(() => {
@@ -214,7 +212,7 @@ export default function HeroSection() {
             PURPOSE
           </h2>
           <p style={{ marginTop: "2rem", fontFamily: "var(--font-mono)", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>
-            Scroll to explore the drop
+            KICKFORGE — Where Motion Meets Craft
           </p>
         </div>
       </div>
