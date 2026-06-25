@@ -2,6 +2,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { prefersReducedMotion } from "@/lib/utils";
+import { getLenis } from "@/lib/lenis";
 
 const FOLDER = "v1";
 const FRAMES = 247;
@@ -133,9 +134,11 @@ export default function HeroSection() {
     return () => ctx.revert();
   }, [drawFrame]);
 
-  // slow idle rotation
+  // slow idle rotation via Lenis (native scroll doesn't fire with Lenis)
   useEffect(() => {
     if (prefersReducedMotion()) return;
+    const lenis = getLenis();
+    if (!lenis) return;
     let forward = true, tick = 0;
     const spin = () => {
       tick++;
@@ -149,17 +152,16 @@ export default function HeroSection() {
       }
       autoSpinRef.current = requestAnimationFrame(spin);
     };
-
-    const onScroll = () => {
+    const stopSpin = () => { if (autoSpinRef.current) cancelAnimationFrame(autoSpinRef.current); };
+    const resetIdle = () => {
       scrollingRef.current = true;
-      if (autoSpinRef.current) cancelAnimationFrame(autoSpinRef.current);
+      stopSpin();
       if (idleRef.current) clearTimeout(idleRef.current);
       idleRef.current = setTimeout(() => { scrollingRef.current = false; autoSpinRef.current = requestAnimationFrame(spin); }, 4000);
     };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
+    lenis.on("scroll", resetIdle);
     idleRef.current = setTimeout(() => { autoSpinRef.current = requestAnimationFrame(spin); }, 4000);
-    return () => { window.removeEventListener("scroll", onScroll); if (autoSpinRef.current) cancelAnimationFrame(autoSpinRef.current); if (idleRef.current) clearTimeout(idleRef.current); };
+    return () => { lenis.off("scroll", resetIdle); stopSpin(); if (idleRef.current) clearTimeout(idleRef.current); };
   }, [drawFrame]);
 
   useEffect(() => {
@@ -223,13 +225,6 @@ export default function HeroSection() {
           <div className="absolute top-0 left-0 w-full h-full bg-[var(--accent)]" style={{ animation: "scrollPulse 2s ease-in-out infinite" }} />
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes scrollPulse {
-          0%, 100% { transform: scaleY(0.1); transform-origin: top; opacity: 0.2; }
-          50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
-        }
-      `}</style>
     </section>
   );
 }
