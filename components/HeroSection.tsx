@@ -66,7 +66,7 @@ export default function HeroSection() {
           }
         }
       }
-      idxRef.current += 0.35;
+      idxRef.current += 0.5;
       animRef.current = requestAnimationFrame(draw);
     };
     animRef.current = requestAnimationFrame(draw);
