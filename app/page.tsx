@@ -45,7 +45,9 @@ export default function Home() {
       <CartSidebar />
       <AtmosphereLayer type="dust" opacity={0.08} speed={0.2} />
       <main className="relative z-10">
-        <HeroSection />
+        <div id="hero-root" style={{ height: "400vh", position: "relative", marginTop: "40px" }}>
+          <HeroSection />
+        </div>
         <FeaturedSection />
         <StatsSection />
         <ExploreSection />

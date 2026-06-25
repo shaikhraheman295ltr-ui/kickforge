@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { gsap } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { prefersReducedMotion } from "@/lib/utils";
 
 const FOLDER = "v1";
@@ -9,11 +9,20 @@ const FRAMES = 247;
 const pad = (n: number) => String(n + 1).padStart(5, "0");
 const frameUrl = (index: number) => `/frames/${FOLDER}/frame${pad(index)}.jpg`;
 
+const COPY_SEQUENCE = [
+  { text: "KICKFORGE",           type: "brand",  start: 0,  end: 20 },
+  { text: "BUILT TO MOVE.",      type: "line",   start: 15, end: 35 },
+  { text: "NOT TO MATCH.",       type: "line",   start: 30, end: 48 },
+  { text: "Every step. Decided.", type: "italic", start: 40, end: 55 },
+  { text: "BEFORE YOU TOOK IT.", type: "line",   start: 48, end: 60 },
+];
+
 export default function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
+  const copyRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const finalRef = useRef<HTMLDivElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const idxRef = useRef(0);
   const animRef = useRef(0);
@@ -57,7 +66,7 @@ export default function HeroSection() {
           }
         }
       }
-      idxRef.current += 0.5;
+      idxRef.current += 0.15;
       animRef.current = requestAnimationFrame(draw);
     };
     animRef.current = requestAnimationFrame(draw);
@@ -67,13 +76,39 @@ export default function HeroSection() {
 
   useEffect(() => {
     if (prefersReducedMotion()) return;
+    const wrapper = document.getElementById("hero-root");
+    const section = sectionRef.current;
+    if (!wrapper || !section) return;
+
+    const ctx = gsap.context(() => {
+      COPY_SEQUENCE.forEach((item, i) => {
+        const el = copyRefs.current[i];
+        if (!el) return;
+        const tl = gsap.timeline({ scrollTrigger: { trigger: wrapper, start: `${item.start}% top`, end: `${item.end}% top`, scrub: 1 } });
+        tl.fromTo(el, { opacity: 0, z: -1200, scale: 0.5, rotationX: 12 }, { opacity: 1, z: 0, scale: 1, rotationX: 0, duration: 0.4, ease: "power2.out" })
+          .to(el, { opacity: 0, z: 1200, scale: 2, duration: 0.6, ease: "power2.in" });
+      });
+
+      if (finalRef.current) {
+        gsap.fromTo(finalRef.current, { opacity: 0, y: 80 }, {
+          opacity: 1, y: 0, ease: "power3.out",
+          scrollTrigger: { trigger: wrapper, start: "75% top", end: "92% top", scrub: true },
+        });
+      }
+    }, section);
+
+    return () => ctx.revert();
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return;
     const tl = gsap.timeline({ delay: 1.8 });
     if (overlayRef.current) tl.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 1.4 }, 0);
-    if (textRef.current) tl.fromTo(textRef.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 0.2);
+    if (copyRefs.current[0]) tl.fromTo(copyRefs.current[0], { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" }, 0.2);
   }, []);
 
   return (
-    <section ref={sectionRef} id="hero" className="relative w-full h-screen overflow-hidden" style={{ backgroundColor: "var(--background)" }}>
+    <section ref={sectionRef} id="hero" className="sticky top-0 w-full h-screen overflow-hidden" style={{ zIndex: 10 }}>
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" aria-hidden="true" />
 
       <div ref={overlayRef} className="absolute inset-0 pointer-events-none z-[2]" aria-hidden="true"
@@ -82,10 +117,42 @@ export default function HeroSection() {
       <div className="absolute inset-0 pointer-events-none z-[3]" aria-hidden="true"
         style={{ background: "radial-gradient(ellipse 60% 40% at 50% 15%, rgba(139,92,246,0.08) 0%, transparent 70%)" }} />
 
-      <div ref={textRef} className="absolute inset-0 flex items-center justify-center z-[5] pointer-events-none">
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(5rem, 15vw, 16rem)", lineHeight: 0.85, letterSpacing: "0.04em", color: "#FFFFFF", textShadow: "0 0 80px rgba(139,92,246,0.25), 0 4px 40px rgba(0,0,0,0.8)" }}>
-          KICKFORGE
-        </h1>
+      <div className="absolute inset-0 flex items-center justify-center z-[5]" style={{ perspective: "1000px" }}>
+        <div className="relative w-full max-w-[90vw] text-center" style={{ transformStyle: "preserve-3d" }}>
+          {COPY_SEQUENCE.map((item, i) => (
+            <div key={i} ref={el => { copyRefs.current[i] = el; }}
+              className="absolute inset-0 flex items-center justify-center opacity-0 will-change-transform"
+              style={{ backfaceVisibility: "hidden" }}>
+              {item.type === "brand" ? (
+                <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(5rem, 15vw, 16rem)", lineHeight: 0.85, letterSpacing: "0.04em", color: "#FFFFFF", textShadow: "0 0 80px rgba(139,92,246,0.25), 0 4px 40px rgba(0,0,0,0.8)" }}>
+                  {item.text}
+                </h1>
+              ) : item.type === "italic" ? (
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: "clamp(2rem, 5vw, 5rem)", fontStyle: "italic", color: "var(--accent)", fontWeight: 300, letterSpacing: "-0.02em", textShadow: "0 0 40px rgba(139,92,246,0.4)" }}>
+                  {item.text}
+                </p>
+              ) : (
+                <p style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.5rem, 4vw, 4rem)", letterSpacing: "0.12em", color: "#FFFFFF", textShadow: "0 2px 20px rgba(0,0,0,0.9)" }}>
+                  {item.text}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div ref={finalRef} className="absolute inset-0 flex flex-col items-center justify-center z-[6] opacity-0 pointer-events-none">
+        <div className="text-center px-6">
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(4rem, 12vw, 14rem)", lineHeight: 0.85, letterSpacing: "0.02em", color: "#FFFFFF" }}>
+            MOVE WITH
+          </h2>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(4rem, 12vw, 14rem)", lineHeight: 0.85, letterSpacing: "0.02em", color: "var(--accent)" }}>
+            PURPOSE
+          </h2>
+          <p style={{ marginTop: "2rem", fontFamily: "var(--font-mono)", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>
+            KICKFORGE — Where Motion Meets Craft
+          </p>
+        </div>
       </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[6] flex flex-col items-center gap-2">
