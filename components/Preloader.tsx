@@ -24,7 +24,8 @@ export default function Preloader() {
     const tl = gsap.timeline();
     tl.to(textRef.current, { opacity: 0, y: -20, duration: 0.5 }, 0.1)
       .to(barRef.current, { scaleX: 0, transformOrigin: "right", duration: 0.5 }, 0.1)
-      .to(containerRef.current, { yPercent: -100, duration: 1.0, ease: "expo.inOut" }, 0.4);
+      .to(containerRef.current, { yPercent: -100, duration: 1.0, ease: "expo.inOut" }, 0.4)
+      .call(() => window.dispatchEvent(new CustomEvent("hero-start")));
   }, [done]);
 
   return (

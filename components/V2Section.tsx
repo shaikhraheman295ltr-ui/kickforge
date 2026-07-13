@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { gsap } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { prefersReducedMotion } from "@/lib/utils";
 
 const FRAMES = 231;
@@ -15,28 +15,48 @@ export default function V2Section() {
   const animRef = useRef(0);
   const visibleRef = useRef(false);
 
+  const cap = 1280;
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || prefersReducedMotion()) return;
 
-    const obs = new IntersectionObserver(([e]) => { visibleRef.current = e.isIntersecting; }, { threshold: 0.1 });
+    const obs = new IntersectionObserver(([e]) => { visibleRef.current = e.isIntersecting; drawPoster(); }, { threshold: 0.1 });
     obs.observe(canvas);
 
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+    const resize = () => { canvas.width = Math.min(window.innerWidth, cap); canvas.height = Math.min(window.innerHeight, cap * 0.5625); };
     resize();
     window.addEventListener("resize", resize);
 
     const loaded: HTMLImageElement[] = new Array(FRAMES);
     imagesRef.current = loaded;
+    let drawnPoster = false;
+
+    const drawPoster = () => {
+      if (drawnPoster || !canvas || !visibleRef.current) return;
+      const firstLoaded = imagesRef.current.find(img => img && img.complete && img.naturalWidth > 0);
+      if (!firstLoaded) return;
+      drawnPoster = true;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const scale = Math.max(canvas.width / firstLoaded.naturalWidth, canvas.height / firstLoaded.naturalHeight);
+      ctx.drawImage(firstLoaded, (canvas.width - firstLoaded.naturalWidth * scale) / 2, (canvas.height - firstLoaded.naturalHeight * scale) / 2, firstLoaded.naturalWidth * scale, firstLoaded.naturalHeight * scale);
+    };
+
     for (let i = 0; i < FRAMES; i++) {
       const img = new Image();
-      img.onload = () => { loaded[i] = img; };
+      img.onload = () => { loaded[i] = img; drawPoster(); };
       img.onerror = () => {};
       img.src = frameUrl(i);
       loaded[i] = img;
     }
 
-    const draw = () => {
+    let lastTime = 0;
+    const draw = (time: number) => {
+      if (!lastTime) lastTime = time;
+      const dt = time - lastTime;
+      lastTime = time;
+      const speed = 0.4 * (dt / 16.67);
       if (!document.hidden && visibleRef.current) {
         const idx = Math.floor(idxRef.current) % FRAMES;
         const img = imagesRef.current[idx];
@@ -46,10 +66,10 @@ export default function V2Section() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
             ctx.drawImage(img, (canvas.width - img.naturalWidth * scale) / 2, (canvas.height - img.naturalHeight * scale) / 2, img.naturalWidth * scale, img.naturalHeight * scale);
+            idxRef.current += speed;
           }
         }
       }
-      idxRef.current += 0.5;
       animRef.current = requestAnimationFrame(draw);
     };
     animRef.current = requestAnimationFrame(draw);
@@ -60,7 +80,13 @@ export default function V2Section() {
   useEffect(() => {
     if (prefersReducedMotion() || !sectionRef.current) return;
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({ delay: 1 });
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 60%",
+          once: true,
+        },
+      });
       tl.fromTo("#v2-heading", { opacity: 0, y: 50, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 1.2, ease: "power3.out" })
         .fromTo("#v2-sub", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, "-=0.6")
         .to("#v2-heading, #v2-sub", { opacity: 0, y: -40, duration: 0.8, ease: "power2.in" }, "+=3")

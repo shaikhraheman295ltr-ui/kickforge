@@ -22,30 +22,45 @@ function AutoPlayer({ folder, frames: total, speed = 1, label, prefix = "frame_"
     if (!canvas) return;
     if (prefersReducedMotion()) return;
 
-    const obs = new IntersectionObserver(([e]) => { visibleRef.current = e.isIntersecting; }, { threshold: 0 });
+    const obs = new IntersectionObserver(([e]) => { visibleRef.current = e.isIntersecting; drawPoster(); }, { threshold: 0 });
     obs.observe(canvas);
 
-    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
+    const cap = 640;
+    const resize = () => { canvas.width = Math.min(canvas.offsetWidth, cap); canvas.height = Math.min(canvas.offsetHeight, cap * 0.75); };
     resize();
     window.addEventListener("resize", resize);
-
-    const onVisibility = () => { if (!document.hidden) return; };
-    document.addEventListener("visibilitychange", onVisibility);
 
     const pad = (n: number) => String(n).padStart(3, "0");
     const loaded: HTMLImageElement[] = new Array(total);
     imagesRef.current = loaded;
+    let drawnPoster = false;
+
+    const drawPoster = () => {
+      if (drawnPoster || !canvas || !visibleRef.current) return;
+      const firstLoaded = imagesRef.current.find(img => img && img.complete && img.naturalWidth > 0);
+      if (!firstLoaded) return;
+      drawnPoster = true;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const scale = Math.max(canvas.width / firstLoaded.naturalWidth, canvas.height / firstLoaded.naturalHeight);
+      ctx.drawImage(firstLoaded, (canvas.width - firstLoaded.naturalWidth * scale) / 2, (canvas.height - firstLoaded.naturalHeight * scale) / 2, firstLoaded.naturalWidth * scale, firstLoaded.naturalHeight * scale);
+    };
 
     for (let i = 0; i < total; i++) {
       const img = new Image();
-      img.onload = () => { loaded[i] = img; };
+      img.onload = () => { loaded[i] = img; drawPoster(); };
       img.onerror = () => {};
       img.src = `/frames/${folder}/${prefix}${pad(i + 1)}.jpg`;
       loaded[i] = img;
     }
 
     let speedFactor = speed;
-    const draw = () => {
+    let lastTime = 0;
+    const draw = (time: number) => {
+      if (!lastTime) lastTime = time;
+      const dt = time - lastTime;
+      lastTime = time;
+      const advance = 0.4 * speedFactor * (dt / 16.67);
       if (!document.hidden && visibleRef.current) {
         const idx = Math.floor(idxRef.current) % total;
         const img = imagesRef.current[idx];
@@ -56,10 +71,10 @@ function AutoPlayer({ folder, frames: total, speed = 1, label, prefix = "frame_"
             const scale = Math.max(canvas.width / img.naturalWidth, canvas.height / img.naturalHeight);
             const sw = img.naturalWidth * scale, sh = img.naturalHeight * scale;
             ctx.drawImage(img, (canvas.width - sw) / 2, (canvas.height - sh) / 2, sw, sh);
+            idxRef.current += advance;
           }
         }
       }
-      idxRef.current += 0.5 * speedFactor;
       animRef.current = requestAnimationFrame(draw);
     };
     animRef.current = requestAnimationFrame(draw);
@@ -81,11 +96,11 @@ function AutoPlayer({ folder, frames: total, speed = 1, label, prefix = "frame_"
 export default function AutoPlayFrames() {
   return (
     <section className="relative py-24 px-6 md:px-16" style={{ backgroundColor: "var(--background)" }}>
-      <div className="mb-10">
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.3em", color: "var(--accent)", textTransform: "uppercase" }}>
+      <div className="mb-10 t-stagger">
+        <span className="t-stagger-line t-stagger-line--1" style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.3em", color: "var(--accent)", textTransform: "uppercase" }}>
           — 03.5 / MOTION GALLERY
         </span>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(3rem, 7vw, 8rem)", lineHeight: 0.85, color: "var(--ink)", letterSpacing: "0.02em" }}>
+        <h2 className="t-stagger-line t-stagger-line--2" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(3rem, 7vw, 8rem)", lineHeight: 0.85, color: "var(--ink)", letterSpacing: "0.02em" }}>
           IN MOTION
         </h2>
       </div>

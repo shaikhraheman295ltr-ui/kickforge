@@ -45,16 +45,32 @@ export default function HeroSection() {
     const loaded: HTMLImageElement[] = new Array(FRAMES);
     imagesRef.current = loaded;
     let loadedCount = 0;
+    let lastReportedMilestone = 0;
+    let started = false;
 
     for (let i = 0; i < FRAMES; i++) {
       const img = new Image();
-      img.onload = () => { loadedCount++; loaded[i] = img; const pct = Math.round((loadedCount / FRAMES) * 100); setLoadProgress(pct); window.dispatchEvent(new CustomEvent("hero-progress", { detail: { percent: pct } })); };
+      img.onload = () => { loadedCount++; loaded[i] = img; const pct = Math.round((loadedCount / FRAMES) * 100); if (pct >= lastReportedMilestone + 5) { lastReportedMilestone = pct; setLoadProgress(pct); window.dispatchEvent(new CustomEvent("hero-progress", { detail: { percent: pct } })); } drawPoster(); };
       img.onerror = () => { loadedCount++; };
       img.src = frameUrl(i);
       loaded[i] = img;
     }
 
-    const draw = () => {
+    const drawPoster = () => {
+      if (started) return;
+      const firstLoaded = imagesRef.current.find(img => img && img.complete && img.naturalWidth > 0);
+      if (!firstLoaded || !canvas) return;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.drawImage(firstLoaded, 0, 0, canvas.width, canvas.height);
+    };
+
+    let lastTime = 0;
+    const draw = (time: number) => {
+      if (!lastTime) lastTime = time;
+      const dt = time - lastTime;
+      lastTime = time;
+      const speed = 0.4 * (dt / 16.67);
       if (!document.hidden && visibleRef.current) {
         const idx = Math.floor(idxRef.current) % FRAMES;
         const img = imagesRef.current[idx];
@@ -63,15 +79,23 @@ export default function HeroSection() {
           if (ctx) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            idxRef.current += speed;
           }
         }
       }
-      idxRef.current += 0.5;
       animRef.current = requestAnimationFrame(draw);
     };
-    animRef.current = requestAnimationFrame(draw);
 
-    return () => { obs.disconnect(); cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
+    const onStart = () => {
+      started = true;
+      idxRef.current = 0;
+      lastTime = 0;
+      animRef.current = requestAnimationFrame(draw);
+    };
+    window.addEventListener("hero-start", onStart, { once: true });
+    const fallbackStart = setTimeout(onStart, 8000);
+
+    return () => { obs.disconnect(); cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); window.removeEventListener("hero-start", onStart); clearTimeout(fallbackStart); };
   }, []);
 
   useEffect(() => {

@@ -31,7 +31,14 @@ export default function Home() {
       gsap.ticker.lagSmoothing(0);
     }
     const refresh = setTimeout(() => ScrollTrigger.refresh(), 800);
-    return () => { clearTimeout(refresh); if (raf) gsap.ticker.remove(raf); destroyLenis(); };
+
+    const staggerObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { (e.target as HTMLElement).classList.add("is-shown"); staggerObs.unobserve(e.target); } });
+    }, { threshold: 0.2 });
+    const staggerEls = document.querySelectorAll(".t-stagger");
+    staggerEls.forEach(el => staggerObs.observe(el));
+
+    return () => { clearTimeout(refresh); if (raf) gsap.ticker.remove(raf); destroyLenis(); staggerObs.disconnect(); };
   }, []);
 
   return (

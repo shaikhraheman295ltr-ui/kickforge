@@ -1,9 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion } from "framer-motion";
+import { Menu, X, User } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getLenis } from "@/lib/lenis";
-import { useCartStore } from "@/lib/store";
+import { useCartStore, useAuthStore } from "@/lib/store";
 
 const NAV_ITEMS = [
   { label: "HOME",    href: "#hero" },
@@ -13,11 +15,24 @@ const NAV_ITEMS = [
 ];
 
 export default function FloatingNav() {
+  const router = useRouter();
   const [visible, setVisible] = useState(false);
   const [active, setActive] = useState("hero");
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuState, setMenuState] = useState<"closed" | "open" | "closing">("closed");
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { items, openCart } = useCartStore();
+  const { isAuthenticated, user } = useAuthStore();
   const cartCount = items.reduce((a, i) => a + i.quantity, 0);
+
+  useEffect(() => { useAuthStore.getState().checkSession(); }, []);
+
+  useEffect(() => {
+    const closeMs = 150;
+    if (menuState === "closing") {
+      const timer = setTimeout(() => setMenuState("closed"), closeMs);
+      return () => clearTimeout(timer);
+    }
+  }, [menuState]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -33,12 +48,21 @@ export default function FloatingNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const toggleMenu = () => {
+    if (menuState === "closed") setMenuState("open");
+    else if (menuState === "open") setMenuState("closing");
+  };
+
+  const closeMenu = () => {
+    if (menuState === "open") setMenuState("closing");
+  };
+
   const navTo = (href: string) => {
     const el = document.querySelector(href);
     if (!el) return;
     const lenis = getLenis();
     lenis ? lenis.scrollTo(el as HTMLElement, { duration: 1.8 }) : el.scrollIntoView({ behavior: "smooth" });
-    setMenuOpen(false);
+    closeMenu();
   };
 
   return (
@@ -51,8 +75,8 @@ export default function FloatingNav() {
       <div className="hidden md:flex items-center gap-1 px-2 py-2 rounded-full glass">
         <span className="font-mono text-[var(--accent)] text-xs tracking-widest px-3 mr-2 font-bold" style={{ fontFamily: "var(--font-display)", fontSize: "18px" }}>KF</span>
         {NAV_ITEMS.map(item => (
-          <button key={item.href} onClick={() => navTo(item.href)}
-            className={cn("relative px-4 py-2 rounded-full text-[10px] font-medium tracking-[0.18em] transition-all duration-300",
+          <button key={item.href} onClick={() => navTo(item.href)} aria-label={`Navigate to ${item.label}`}
+            className={cn("relative px-4 py-2 rounded-full text-[10px] font-medium tracking-[0.18em] transition-all duration-300 cursor-pointer",
               active === item.href.replace("#", "") ? "text-[var(--background)]" : "text-[var(--muted)] hover:text-[var(--ink)]"
             )}
           >
@@ -62,31 +86,48 @@ export default function FloatingNav() {
             <span className="relative z-10">{item.label}</span>
           </button>
         ))}
-        <button onClick={openCart} className="relative ml-3 px-4 py-2 rounded-full text-[10px] font-medium tracking-widest text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
+        <button onClick={() => router.push(isAuthenticated ? "/login" : "/login")} aria-label={isAuthenticated ? "Profile" : "Sign in"} className="relative ml-2 px-4 py-2 rounded-full text-[10px] font-medium tracking-widest text-[var(--muted)] hover:text-[var(--ink)] transition-colors cursor-pointer">
+          {isAuthenticated && user ? (
+            <span className="flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-full bg-[var(--accent)] text-black text-[9px] font-bold flex items-center justify-center">{user.name[0].toUpperCase()}</span>
+            </span>
+          ) : (
+            "LOGIN"
+          )}
+        </button>
+        <button onClick={openCart} aria-label={`Shopping bag${cartCount > 0 ? ` (${cartCount} items)` : ""}`} className="relative ml-3 px-4 py-2 rounded-full text-[10px] font-medium tracking-widest text-[var(--muted)] hover:text-[var(--ink)] transition-colors cursor-pointer">
           BAG
           {cartCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--accent)] text-black text-[9px] rounded-full flex items-center justify-center font-bold">{cartCount}</span>}
         </button>
       </div>
 
-      <button className="md:hidden glass w-12 h-12 rounded-full flex items-center justify-center" onClick={() => setMenuOpen(!menuOpen)}>
-        <span className="text-[var(--accent)] font-mono text-xs font-bold">KF</span>
+      <button className="md:hidden glass w-12 h-12 rounded-full flex items-center justify-center cursor-pointer" onClick={toggleMenu} aria-label={menuState === "open" ? "Close menu" : "Open menu"}>
+        <div className="t-icon-swap" data-state={menuState === "open" ? "b" : "a"}>
+          <span className="t-icon" data-icon="a" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Menu size={18} style={{ color: "var(--accent)" }} />
+          </span>
+          <span className="t-icon" data-icon="b" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <X size={18} style={{ color: "var(--accent)" }} />
+          </span>
+        </div>
       </button>
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div initial={{ opacity: 0, scale: 0.95, y: -8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -8 }}
-            className="md:hidden absolute top-16 right-0 w-48 py-3 px-2 rounded-2xl glass">
-            {NAV_ITEMS.map(item => (
-              <button key={item.href} onClick={() => navTo(item.href)}
-                className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-medium tracking-widest text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
-                {item.label}
-              </button>
-            ))}
-            <button onClick={openCart} className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-medium tracking-widest text-[var(--accent)]">
-              BAG {cartCount > 0 && `(${cartCount})`}
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+      <div ref={dropdownRef} data-origin="top-right"
+        className={`md:hidden absolute top-16 right-0 w-48 py-3 px-2 rounded-2xl glass t-dropdown ${menuState === "open" ? "is-open" : menuState === "closing" ? "is-closing" : ""}`}>
+        {NAV_ITEMS.map(item => (
+          <button key={item.href} onClick={() => navTo(item.href)} aria-label={`Navigate to ${item.label}`}
+            className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-medium tracking-widest text-[var(--muted)] hover:text-[var(--ink)] transition-colors cursor-pointer">
+            {item.label}
+          </button>
+        ))}
+        <button onClick={() => { router.push("/login"); closeMenu(); }} aria-label={isAuthenticated ? "Profile" : "Sign in"}
+          className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-medium tracking-widest text-[var(--muted)] hover:text-[var(--ink)] transition-colors cursor-pointer">
+          {isAuthenticated && user ? `PROFILE (${user.name[0].toUpperCase()})` : "LOGIN"}
+        </button>
+        <button onClick={() => { openCart(); closeMenu(); }} aria-label="Open shopping bag" className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-medium tracking-widest text-[var(--accent)] cursor-pointer">
+          BAG {cartCount > 0 && `(${cartCount})`}
+        </button>
+      </div>
     </motion.nav>
   );
 }

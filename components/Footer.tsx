@@ -14,7 +14,7 @@ export default function Footer() {
         <span style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", color: "var(--ink)", letterSpacing: "0.08em" }}>KICKFORGE</span>
         <div className="flex items-center gap-6">
           {links.map(({ label, href, Icon }) => (
-            <a key={label} href={href} target="_blank" rel="noopener noreferrer"
+            <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}
               className="flex items-center gap-2 transition-opacity hover:opacity-70"
               style={{ fontFamily: "var(--font-mono)", fontSize: "0.8rem", color: "var(--muted)", letterSpacing: "0.05em" }}>
               <Icon size={16} style={{ color: "var(--muted)" }} />

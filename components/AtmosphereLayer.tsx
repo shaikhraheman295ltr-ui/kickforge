@@ -17,17 +17,18 @@ export default function AtmosphereLayer({ type, opacity = 0.3, speed = 1 }: { ty
     let h = Math.floor(canvas.offsetHeight * SCALE);
     canvas.width = w; canvas.height = h;
 
-    const particles = Array.from({ length: type === "dust" ? 24 : 8 }, () => ({
+    const particles = Array.from({ length: type === "dust" ? 14 : 5 }, () => ({
       x: Math.random() * w, y: Math.random() * h,
-      size: type === "dust" ? Math.random() * 1.2 + 0.3 : Math.random() * 40 + 20,
-      vx: (Math.random() - 0.5) * 0.12 * speed, vy: -Math.random() * 0.08 * speed,
-      alpha: Math.random() * 0.5, dir: Math.random() > 0.5 ? 1 : -1,
+      size: type === "dust" ? Math.random() * 1 + 0.3 : Math.random() * 30 + 15,
+      vx: (Math.random() - 0.5) * 0.08 * speed, vy: -Math.random() * 0.05 * speed,
+      alpha: Math.random() * 0.4, dir: Math.random() > 0.5 ? 1 : -1,
     }));
 
     let frame = 0;
     const draw = () => {
+      if (document.hidden) { animRef.current = requestAnimationFrame(draw); return; }
       frame++;
-      if (frame % 3 !== 0) { animRef.current = requestAnimationFrame(draw); return; }
+      if (frame % 4 !== 0) { animRef.current = requestAnimationFrame(draw); return; }
       ctx.clearRect(0, 0, w, h);
       particles.forEach(p => {
         p.x += p.vx; p.y += p.vy;

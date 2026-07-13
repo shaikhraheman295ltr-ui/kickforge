@@ -16,20 +16,21 @@ export default function Starfield({ opacity = 0.6, speed = 0.15 }: { opacity?: n
     resize();
     window.addEventListener("resize", resize);
 
-    const stars = Array.from({ length: 120 }, () => ({
+    const stars = Array.from({ length: 60 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      size: Math.random() * 1.5 + 0.3,
-      alpha: Math.random() * 0.8 + 0.2,
+      size: Math.random() * 1.2 + 0.3,
+      alpha: Math.random() * 0.6 + 0.2,
       dir: Math.random() > 0.5 ? 1 : -1,
-      speed: Math.random() * 0.002 + 0.001,
+      speed: Math.random() * 0.001 + 0.0005,
     }));
 
     const draw = () => {
+      if (document.hidden) { animRef.current = requestAnimationFrame(draw); return; }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       stars.forEach(s => {
         s.alpha += s.dir * s.speed * speed;
-        if (s.alpha > 0.9 || s.alpha < 0.1) s.dir *= -1;
+        if (s.alpha > 0.7 || s.alpha < 0.1) s.dir *= -1;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255,255,255,${s.alpha})`;

@@ -3,42 +3,39 @@ import { useState, useRef } from "react";
 import { useCartStore } from "@/lib/store";
 import products from "@/server/products.json";
 
-const FEATURED_IDS = [1, 2, 3, 4, 5, 6];
-
 export default function FeaturedSection() {
   const { addItem, openCart } = useCartStore();
 
-  const handleAddToBag = (product: typeof products[0]) => {
-    addItem({ id: product.id, name: product.name, price: product.salePrice ?? product.price, image: product.image, size: product.sizes[0], quantity: 1 });
+  const handleAddToBag = (product: typeof products[0], size: number) => {
+    addItem({ id: product.id, name: product.name, price: product.salePrice ?? product.price, image: product.image, size, quantity: 1 });
     openCart();
   };
 
   return (
     <section id="featured" className="relative py-32 px-6 md:px-16" style={{ backgroundColor: "var(--background)" }}>
-      <div className="mb-16">
-        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.3em", color: "var(--accent)", textTransform: "uppercase" }}>
+      <div className="mb-16 t-stagger">
+        <span className="t-stagger-line t-stagger-line--1" style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.3em", color: "var(--accent)", textTransform: "uppercase" }}>
           — 01 / LATEST DROP
         </span>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(4rem, 9vw, 10rem)", lineHeight: 0.85, letterSpacing: "0.02em", color: "var(--ink)" }}>
+        <h2 className="t-stagger-line t-stagger-line--2" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(4rem, 9vw, 10rem)", lineHeight: 0.85, letterSpacing: "0.02em", color: "var(--ink)" }}>
           FEATURED
         </h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {FEATURED_IDS.map(id => {
-          const product = products.find(p => p.id === id);
-          if (!product) return null;
-          return <TiltCard key={product.id} product={product} onAddToBag={() => handleAddToBag(product)} />;
-        })}
+        {products.filter(p => p.featured).map(product => (
+          <TiltCard key={product.id} product={product} onAddToBag={(size) => handleAddToBag(product, size)} />
+        ))}
       </div>
     </section>
   );
 }
 
-function TiltCard({ product, onAddToBag }: { product: typeof products[0]; onAddToBag: () => void }) {
+function TiltCard({ product, onAddToBag }: { product: typeof products[0]; onAddToBag: (size: number) => void }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   const [activeColor, setActiveColor] = useState(product.colors[0]);
+  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
 
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
@@ -105,8 +102,8 @@ function TiltCard({ product, onAddToBag }: { product: typeof products[0]; onAddT
         {/* Color dots */}
         <div className="flex gap-2 mt-3">
           {product.colors.map(c => (
-            <button key={c} onClick={(e) => { e.stopPropagation(); setActiveColor(c); }}
-              className="w-4 h-4 rounded-full transition-all duration-300"
+            <button key={c} onClick={(e) => { e.stopPropagation(); setActiveColor(c); }} aria-label={`Color ${c}`}
+              className="w-5 h-5 rounded-full transition-all duration-300 cursor-pointer"
               style={{
                 backgroundColor: c,
                 border: activeColor === c ? "2px solid #fff" : "2px solid transparent",
@@ -116,9 +113,24 @@ function TiltCard({ product, onAddToBag }: { product: typeof products[0]; onAddT
           ))}
         </div>
 
-        <div className="overflow-hidden" style={{ maxHeight: hovered ? "60px" : "0px", transition: "max-height 0.4s cubic-bezier(0.16,1,0.3,1)" }}>
-          <button onClick={onAddToBag}
-            className="mt-3 w-full py-3 rounded-lg text-black font-bold text-xs tracking-widest transition-opacity"
+        <div className="overflow-hidden" style={{ maxHeight: hovered ? "100px" : "0px", transition: "max-height 0.4s cubic-bezier(0.16,1,0.3,1)" }}>
+          {/* Size selector */}
+          <div className="flex flex-wrap gap-1 mt-3">
+            {product.sizes.slice(0, 6).map(s => (
+              <button key={s} onClick={(e) => { e.stopPropagation(); setSelectedSize(s); }} aria-label={`Size ${s}`}
+                className="w-11 h-11 rounded text-xs transition-all duration-200 cursor-pointer"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  border: selectedSize === s ? "1px solid var(--accent)" : "1px solid var(--border)",
+                  color: selectedSize === s ? "var(--accent)" : "var(--muted)",
+                  backgroundColor: selectedSize === s ? "rgba(139,92,246,0.12)" : "var(--surface-2)",
+                }} >
+                {s}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => onAddToBag(selectedSize)}
+            className="mt-2 w-full py-3 rounded-lg text-black font-bold text-xs tracking-widest transition-opacity cursor-pointer"
             style={{ backgroundColor: "var(--accent)", fontFamily: "var(--font-mono)", opacity: hovered ? 1 : 0, transition: "opacity 0.3s ease 0.1s" }}>
             ADD TO BAG
           </button>

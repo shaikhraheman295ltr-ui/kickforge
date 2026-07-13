@@ -24,16 +24,26 @@ export default function SaleSection() {
   const { addItem, openCart } = useCartStore();
   const saleProducts = products.filter(p => p.onSale);
 
-  useEffect(() => { setTarget(new Date(Date.now() + 3 * 24 * 3600000)); }, []);
+  useEffect(() => {
+    const KEY = "kf-sale-end";
+    const stored = localStorage.getItem(KEY);
+    if (stored) {
+      const ts = parseInt(stored, 10);
+      if (ts > Date.now()) { setTarget(new Date(ts)); return; }
+    }
+    const end = new Date(Date.now() + 3 * 24 * 3600 * 1000);
+    localStorage.setItem(KEY, String(end.getTime()));
+    setTarget(end);
+  }, []);
 
   return (
     <section id="sale" className="relative py-24 px-6 md:px-16" style={{ backgroundColor: "var(--background)" }}>
       <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,45,45,0.08) 0%, transparent 70%)" }} />
 
       <div className="mb-12 flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
-        <div>
-          <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.3em", color: "var(--accent-2)", textTransform: "uppercase" }}>— 03 / LIMITED TIME</span>
-          <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(4rem, 9vw, 10rem)", lineHeight: 0.85, color: "var(--ink)", letterSpacing: "0.02em" }}>SALE</h2>
+        <div className="t-stagger">
+          <span className="t-stagger-line t-stagger-line--1" style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.3em", color: "var(--accent-2)", textTransform: "uppercase" }}>— 03 / LIMITED TIME</span>
+          <h2 className="t-stagger-line t-stagger-line--2" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(4rem, 9vw, 10rem)", lineHeight: 0.85, color: "var(--ink)", letterSpacing: "0.02em" }}>SALE</h2>
         </div>
 
         <div className="flex gap-4 items-end">
@@ -57,7 +67,7 @@ export default function SaleSection() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {saleProducts.map(p => (
-          <div key={p.id} className="relative rounded-xl overflow-hidden cursor-pointer group" style={{ backgroundColor: "var(--surface)", border: "1px solid rgba(255,45,45,0.2)" }}>
+          <div key={p.id} className="relative rounded-xl overflow-hidden group" style={{ backgroundColor: "var(--surface)", border: "1px solid rgba(255,45,45,0.2)" }}>
             <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full" style={{ backgroundColor: "var(--accent-2)", fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "#fff", letterSpacing: "0.1em" }}>
               -{Math.round(((p.price - (p.salePrice ?? p.price)) / p.price) * 100)}% OFF
             </div>
@@ -70,7 +80,7 @@ export default function SaleSection() {
                 <span style={{ fontFamily: "var(--font-mono)", color: "var(--muted)", fontSize: "0.95rem", textDecoration: "line-through" }}>${p.price}</span>
               </div>
               <button onClick={() => { addItem({ id: p.id, name: p.name, price: p.salePrice ?? p.price, image: p.image, size: p.sizes[0], quantity: 1 }); openCart(); }}
-                className="mt-4 w-full py-3 rounded-lg font-bold text-xs tracking-widest transition-all hover:opacity-90"
+                className="mt-4 w-full py-3 rounded-lg font-bold text-xs tracking-widest transition-all hover:opacity-90 cursor-pointer"
                 style={{ backgroundColor: "var(--accent-2)", color: "#fff", fontFamily: "var(--font-mono)" }}>
                 GRAB DEAL
               </button>

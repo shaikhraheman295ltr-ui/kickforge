@@ -20,6 +20,43 @@ interface CartStore {
   total: () => number;
 }
 
+/* ── Auth Store ─────────────────────────────────────────────── */
+interface AuthState {
+  isAuthenticated: boolean;
+  user: { name: string; email: string } | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (name: string, email: string, password: string) => Promise<boolean>;
+  logout: () => void;
+  checkSession: () => void;
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  isAuthenticated: false,
+  user: null,
+  login: async (_email, _password) => {
+    await new Promise(r => setTimeout(r, 1200));
+    set({ isAuthenticated: true, user: { name: _email.split("@")[0], email: _email } });
+    if (typeof window !== "undefined") localStorage.setItem("kf-auth", JSON.stringify({ name: _email.split("@")[0], email: _email }));
+    return true;
+  },
+  signup: async (name, email, _password) => {
+    await new Promise(r => setTimeout(r, 1400));
+    set({ isAuthenticated: true, user: { name, email } });
+    if (typeof window !== "undefined") localStorage.setItem("kf-auth", JSON.stringify({ name, email }));
+    return true;
+  },
+  logout: () => {
+    set({ isAuthenticated: false, user: null });
+    if (typeof window !== "undefined") localStorage.removeItem("kf-auth");
+  },
+  checkSession: () => {
+    if (typeof window !== "undefined") {
+      const raw = localStorage.getItem("kf-auth");
+      if (raw) try { const u = JSON.parse(raw); set({ isAuthenticated: true, user: u }); } catch { /* ignore */ }
+    }
+  },
+}));
+
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   isOpen: false,
