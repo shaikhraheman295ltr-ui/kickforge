@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { initLenis, destroyLenis } from "@/lib/lenis";
 import CustomCursor from "@/components/CustomCursor";
+import Crosshair from "@/components/Crosshair";
 import Preloader from "@/components/Preloader";
 import FloatingNav from "@/components/FloatingNav";
 import HeroSection from "@/components/HeroSection";
@@ -44,6 +45,7 @@ export default function Home() {
   return (
     <>
       <Starfield opacity={0.4} speed={0.12} />
+      <Crosshair />
       <CustomCursor />
       <Preloader />
       <MarqueeBar />
