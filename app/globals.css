@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&family=Cormorant:wght@400;500;600;700&display=swap');
-
 :root {
   --background: #0A0A0F;
   --surface: #12121A;
@@ -53,7 +51,7 @@ main {
   scroll-behavior: smooth;
 }
 
-#featured, #explore, #sale, #cta {
+#featured, #explore, #sale, #cta, #hero {
   scroll-snap-align: start;
   content-visibility: auto;
   contain-intrinsic-size: 800px;

@@ -1,18 +1,23 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
-import { useCartStore } from "@/lib/store";
+import { useCartStore, useAuthStore, useLoginModalStore } from "@/lib/store";
 import products from "@/server/products.json";
 
 type Category = "all" | "running" | "lifestyle" | "training" | "outdoor" | "sale";
 const FILTERS: Category[] = ["all", "running", "lifestyle", "training", "outdoor", "sale"];
 
 export default function ExploreSection() {
+  const router = useRouter();
   const [active, setActive] = useState<Category>("all");
   const [selected, setSelected] = useState<typeof products[0] | null>(null);
   const [modalState, setModalState] = useState<"closed" | "open" | "closing">("closed");
   const [selectedSize, setSelectedSize] = useState<number | null>(null);
   const { addItem, openCart } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
+  const { openLogin } = useLoginModalStore();
 
   useEffect(() => {
     if (modalState === "closing") {
@@ -33,6 +38,11 @@ export default function ExploreSection() {
 
   const addAndClose = () => {
     if (!selected) return;
+    if (!isAuthenticated) {
+      openLogin({ id: selected.id, name: selected.name, price: selected.salePrice ?? selected.price, image: selected.image, size: selectedSize ?? selected.sizes[0], quantity: 1 });
+      closeModal();
+      return;
+    }
     addItem({ id: selected.id, name: selected.name, price: selected.salePrice ?? selected.price, image: selected.image, size: selectedSize ?? selected.sizes[0], quantity: 1 });
     openCart();
     closeModal();
@@ -72,7 +82,7 @@ export default function ExploreSection() {
             role="button" tabIndex={0} aria-label={`View ${product.name}`} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(product); } }}
             onClick={() => openModal(product)}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={product.image} alt={product.name} className="w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+            <Image src={product.image} alt={product.name} width={600} height={400} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" loading="lazy" className="w-full object-cover transition-transform duration-500 group-hover:scale-105" />
             <div className="p-4">
               <div className="flex items-center justify-between">
                 <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "var(--ink)", letterSpacing: "0.04em" }}>{product.name}</h3>
@@ -96,15 +106,24 @@ export default function ExploreSection() {
             onClick={e => e.stopPropagation()}>
             <div className="w-full md:w-1/2 aspect-square relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={selected.image} alt={selected.name} className="w-full h-full object-cover" />
+              <Image src={selected.image} alt={selected.name} width={600} height={600} sizes="(max-width: 768px) 100vw, 50vw" loading="lazy" className="w-full h-full object-cover" />
             </div>
             <div className="w-full md:w-1/2 p-8 flex flex-col justify-between">
               <div>
                 <button onClick={closeModal} aria-label="Close details" className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer z-20" style={{ backgroundColor: "var(--surface-2)", color: "var(--muted)" }}>
                   <X size={16} />
                 </button>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase" }}>{selected.category}</span>
-                <h3 style={{ fontFamily: "var(--font-display)", fontSize: "3rem", lineHeight: 0.9, color: "var(--ink)", letterSpacing: "0.04em", marginTop: "0.5rem" }}>{selected.name}</h3>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase" }}>{selected.category}</span>
+                    <h3 style={{ fontFamily: "var(--font-display)", fontSize: "3rem", lineHeight: 0.9, color: "var(--ink)", letterSpacing: "0.04em", marginTop: "0.5rem" }}>{selected.name}</h3>
+                  </div>
+                  <button onClick={() => { closeModal(); router.push(`/product/${selected.id}`); }} aria-label="View full details"
+                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs tracking-widest cursor-pointer shrink-0"
+                    style={{ fontFamily: "var(--font-mono)", border: "1px solid var(--border)", color: "var(--muted)" }}>
+                    FULL DETAILS
+                  </button>
+                </div>
                 <p style={{ color: "var(--muted)", fontSize: "0.9rem", marginTop: "1rem", lineHeight: 1.6 }}>{selected.description}</p>
                 <div className="flex items-center gap-4 mt-4">
                   {selected.onSale && selected.salePrice && <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent)", fontSize: "2rem" }}>${selected.salePrice}</span>}

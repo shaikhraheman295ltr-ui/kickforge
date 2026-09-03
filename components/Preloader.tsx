@@ -12,10 +12,10 @@ export default function Preloader() {
   useEffect(() => {
     const onProgress = (e: CustomEvent<{ percent: number }>) => {
       setProgress(e.detail.percent);
-      if (e.detail.percent >= 100) setDone(true);
+      if (e.detail.percent >= 20) setDone(true);
     };
     window.addEventListener("hero-progress", onProgress as EventListener);
-    const fallback = setTimeout(() => setDone(true), 6000);
+    const fallback = setTimeout(() => setDone(true), 2500);
     return () => { window.removeEventListener("hero-progress", onProgress as EventListener); clearTimeout(fallback); };
   }, []);
 
@@ -29,7 +29,13 @@ export default function Preloader() {
   }, [done]);
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-[99999] bg-[var(--background)] flex flex-col items-center justify-center pointer-events-none">
+    <div ref={containerRef} className="fixed inset-0 z-[99999] flex flex-col items-center justify-center pointer-events-none"
+      style={{
+        backgroundColor: "var(--background)",
+        backgroundImage: "url('/images/hero-poster.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}>
       <div ref={textRef} className="flex flex-col items-center gap-4">
         <div className="font-display text-[var(--accent)] text-4xl tracking-[0.4em]" style={{ fontFamily: "var(--font-display)" }}>
           KICKFORGE

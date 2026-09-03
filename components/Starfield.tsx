@@ -12,6 +12,10 @@ export default function Starfield({ opacity = 0.6, speed = 0.15 }: { opacity?: n
     if (!ctx) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    let isActive = true;
+    const obs = new IntersectionObserver(([e]) => { isActive = e.isIntersecting; }, { threshold: 0 });
+    obs.observe(canvas);
+
     const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
     resize();
     window.addEventListener("resize", resize);
@@ -26,7 +30,10 @@ export default function Starfield({ opacity = 0.6, speed = 0.15 }: { opacity?: n
     }));
 
     const draw = () => {
-      if (document.hidden) { animRef.current = requestAnimationFrame(draw); return; }
+      if (document.hidden || !isActive) {
+        animRef.current = requestAnimationFrame(draw);
+        return;
+      }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       stars.forEach(s => {
         s.alpha += s.dir * s.speed * speed;
@@ -39,7 +46,7 @@ export default function Starfield({ opacity = 0.6, speed = 0.15 }: { opacity?: n
       animRef.current = requestAnimationFrame(draw);
     };
     draw();
-    return () => { cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
+    return () => { obs.disconnect(); cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
   }, [speed]);
 
   return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none z-0" style={{ opacity }} aria-hidden="true" />;

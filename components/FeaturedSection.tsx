@@ -1,12 +1,20 @@
 "use client";
 import { useState, useRef } from "react";
-import { useCartStore } from "@/lib/store";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useCartStore, useAuthStore, useLoginModalStore } from "@/lib/store";
 import products from "@/server/products.json";
 
 export default function FeaturedSection() {
   const { addItem, openCart } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
+  const { openLogin } = useLoginModalStore();
 
   const handleAddToBag = (product: typeof products[0], size: number) => {
+    if (!isAuthenticated) {
+      openLogin({ id: product.id, name: product.name, price: product.salePrice ?? product.price, image: product.image, size, quantity: 1 });
+      return;
+    }
     addItem({ id: product.id, name: product.name, price: product.salePrice ?? product.price, image: product.image, size, quantity: 1 });
     openCart();
   };
@@ -23,32 +31,45 @@ export default function FeaturedSection() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.filter(p => p.featured).map(product => (
-          <TiltCard key={product.id} product={product} onAddToBag={(size) => handleAddToBag(product, size)} />
+        {products.filter(p => p.featured).map((product, idx) => (
+          <TiltCard key={product.id} product={product} index={idx + 1} onAddToBag={(size) => handleAddToBag(product, size)} />
         ))}
       </div>
     </section>
   );
 }
 
-function TiltCard({ product, onAddToBag }: { product: typeof products[0]; onAddToBag: (size: number) => void }) {
+function TiltCard({ product, index, onAddToBag }: { product: typeof products[0]; index: number; onAddToBag: (size: number) => void }) {
+  const router = useRouter();
   const cardRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState(false);
   const [activeColor, setActiveColor] = useState(product.colors[0]);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
+  const rafRef = useRef<number>(0);
 
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    cardRef.current.style.transform = `perspective(1000px) rotateX(${-y * 14}deg) rotateY(${x * 14}deg) scale(1.02)`;
+    cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (!cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      cardRef.current.style.transform = `perspective(1000px) rotateX(${-y * 14}deg) rotateY(${x * 14}deg) scale(1.02)`;
+    });
   };
 
   const onMouseLeave = () => {
+    cancelAnimationFrame(rafRef.current);
     if (!cardRef.current) return;
     cardRef.current.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)";
     setHovered(false);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      router.push(`/product/${product.id}`);
+    }
   };
 
   const hexToHue = (hex: string) => {
@@ -71,12 +92,15 @@ function TiltCard({ product, onAddToBag }: { product: typeof products[0]; onAddT
   const hueRotate = targetHue - baseHue;
 
   return (
-    <div ref={cardRef} onMouseMove={onMouseMove} onMouseEnter={() => setHovered(true)} onMouseLeave={onMouseLeave}
+    <div ref={cardRef} tabIndex={0} role="group"
+      aria-label={`${product.name} product card. Press Enter to view details.`}
+      onKeyDown={onKeyDown}
+      onMouseMove={onMouseMove} onMouseEnter={() => setHovered(true)} onMouseLeave={onMouseLeave}
       className="relative aspect-[3/4] rounded-xl overflow-hidden cursor-pointer group"
       style={{ transition: "transform 0.1s ease", backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={product.image} alt={product.name}
+      <Image src={product.image} alt={product.name} width={600} height={800} sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" loading="lazy" placeholder="empty"
         className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
         style={{
           transform: hovered ? "scale(1.06)" : "scale(1)",
@@ -90,7 +114,7 @@ function TiltCard({ product, onAddToBag }: { product: typeof products[0]; onAddT
 
       <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
         <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", letterSpacing: "0.2em", color: "var(--accent)", textTransform: "uppercase", marginBottom: "0.5rem" }}>
-          #{String(product.id).padStart(2, "0")}
+          #{String(index).padStart(2, "0")}
         </p>
         <h3 style={{ fontFamily: "var(--font-display)", fontSize: "2.5rem", lineHeight: 0.9, color: "#fff", letterSpacing: "0.02em" }}>
           {product.name}
@@ -116,7 +140,7 @@ function TiltCard({ product, onAddToBag }: { product: typeof products[0]; onAddT
         <div className="overflow-hidden" style={{ maxHeight: hovered ? "100px" : "0px", transition: "max-height 0.4s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Size selector */}
           <div className="flex flex-wrap gap-1 mt-3">
-            {product.sizes.slice(0, 6).map(s => (
+            {product.sizes.map(s => (
               <button key={s} onClick={(e) => { e.stopPropagation(); setSelectedSize(s); }} aria-label={`Size ${s}`}
                 className="w-11 h-11 rounded text-xs transition-all duration-200 cursor-pointer"
                 style={{
@@ -129,11 +153,18 @@ function TiltCard({ product, onAddToBag }: { product: typeof products[0]; onAddT
               </button>
             ))}
           </div>
-          <button onClick={() => onAddToBag(selectedSize)}
-            className="mt-2 w-full py-3 rounded-lg text-black font-bold text-xs tracking-widest transition-opacity cursor-pointer"
-            style={{ backgroundColor: "var(--accent)", fontFamily: "var(--font-mono)", opacity: hovered ? 1 : 0, transition: "opacity 0.3s ease 0.1s" }}>
-            ADD TO BAG
-          </button>
+          <div className="flex gap-2 mt-2">
+            <button onClick={() => onAddToBag(selectedSize)}
+              className="flex-1 py-3 rounded-lg text-black font-bold text-xs tracking-widest transition-opacity cursor-pointer"
+              style={{ backgroundColor: "var(--accent)", fontFamily: "var(--font-mono)", opacity: hovered ? 1 : 0, transition: "opacity 0.3s ease 0.1s" }}>
+              ADD TO BAG
+            </button>
+            <button onClick={() => router.push(`/product/${product.id}`)}
+              className="py-3 px-3 rounded-lg text-xs tracking-widest transition-opacity cursor-pointer"
+              style={{ fontFamily: "var(--font-mono)", border: "1px solid var(--border)", color: "var(--muted)", opacity: hovered ? 1 : 0, transition: "opacity 0.3s ease 0.15s" }}>
+              VIEW
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -7,7 +7,6 @@ import Crosshair from "@/components/Crosshair";
 import Preloader from "@/components/Preloader";
 import FloatingNav from "@/components/FloatingNav";
 import HeroSection from "@/components/HeroSection";
-import V2Section from "@/components/V2Section";
 import FeaturedSection from "@/components/FeaturedSection";
 import ExploreSection from "@/components/ExploreSection";
 import SaleSection from "@/components/SaleSection";
@@ -16,6 +15,8 @@ import AutoPlayFrames from "@/components/AutoPlayFrames";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 import CartSidebar from "@/components/CartSidebar";
+import LoginModal from "@/components/LoginModal";
+
 import AtmosphereLayer from "@/components/AtmosphereLayer";
 import MarqueeBar from "@/components/MarqueeBar";
 import ScrollProgress from "@/components/ScrollProgress";
@@ -52,6 +53,7 @@ export default function Home() {
       <ScrollProgress />
       <FloatingNav />
       <CartSidebar />
+      <LoginModal />
       <AtmosphereLayer type="dust" opacity={0.08} speed={0.2} />
       <main className="relative z-10">
         <div id="hero-root" style={{ height: "400vh", position: "relative", marginTop: "40px" }}>
@@ -63,7 +65,6 @@ export default function Home() {
         <SaleSection />
         <AutoPlayFrames />
         <FinalCTA />
-        <V2Section />
         <Footer />
       </main>
     </>

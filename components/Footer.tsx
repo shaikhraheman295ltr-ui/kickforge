@@ -2,9 +2,9 @@
 import { Instagram, Github, Linkedin } from "lucide-react";
 
 const links = [
-  { label: "Instagram", href: "https://www.instagram.com/yolcu__raheman?igsh=YzA5eGJnaHNoZXRk", Icon: Instagram },
-  { label: "GitHub", href: "https://github.com/shaikhraheman295ltr-ui", Icon: Github },
-  { label: "LinkedIn", href: "https://www.linkedin.com/in/shaikh-a-raheman-6015193a2?utm_source=share_via&utm_content=profile&utm_medium=member_android", Icon: Linkedin },
+  { label: "Instagram", href: "https://instagram.com/kickforge", Icon: Instagram },
+  { label: "GitHub", href: "https://github.com/kickforge", Icon: Github },
+  { label: "LinkedIn", href: "https://linkedin.com/company/kickforge", Icon: Linkedin },
 ];
 
 export default function Footer() {

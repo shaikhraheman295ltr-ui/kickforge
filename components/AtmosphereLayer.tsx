@@ -12,6 +12,10 @@ export default function AtmosphereLayer({ type, opacity = 0.3, speed = 1 }: { ty
     if (!ctx) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    let isActive = true;
+    const obs = new IntersectionObserver(([e]) => { isActive = e.isIntersecting; }, { threshold: 0 });
+    obs.observe(canvas);
+
     const SCALE = 0.25;
     let w = Math.floor(canvas.offsetWidth * SCALE);
     let h = Math.floor(canvas.offsetHeight * SCALE);
@@ -26,7 +30,10 @@ export default function AtmosphereLayer({ type, opacity = 0.3, speed = 1 }: { ty
 
     let frame = 0;
     const draw = () => {
-      if (document.hidden) { animRef.current = requestAnimationFrame(draw); return; }
+      if (document.hidden || !isActive) {
+        animRef.current = requestAnimationFrame(draw);
+        return;
+      }
       frame++;
       if (frame % 4 !== 0) { animRef.current = requestAnimationFrame(draw); return; }
       ctx.clearRect(0, 0, w, h);
@@ -46,7 +53,7 @@ export default function AtmosphereLayer({ type, opacity = 0.3, speed = 1 }: { ty
       animRef.current = requestAnimationFrame(draw);
     };
     draw();
-    return () => cancelAnimationFrame(animRef.current);
+    return () => { obs.disconnect(); cancelAnimationFrame(animRef.current); };
   }, [type, speed]);
 
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity }} aria-hidden="true" />;

@@ -57,6 +57,21 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 }));
 
+/* ── Login Modal Store ──────────────────────────────────────── */
+interface LoginModalStore {
+  isOpen: boolean;
+  pendingItem: CartItem | null;
+  openLogin: (item?: CartItem) => void;
+  closeLogin: () => void;
+}
+
+export const useLoginModalStore = create<LoginModalStore>((set) => ({
+  isOpen: false,
+  pendingItem: null,
+  openLogin: (item) => set({ isOpen: true, pendingItem: item ?? null }),
+  closeLogin: () => set({ isOpen: false, pendingItem: null }),
+}));
+
 export const useCartStore = create<CartStore>((set, get) => ({
   items: [],
   isOpen: false,

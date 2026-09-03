@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/lib/store";
@@ -11,8 +12,17 @@ export default function CartSidebar() {
 
   const handleCheckout = async () => {
     setOrderState("loading");
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+    if (!apiUrl) {
+      await new Promise(r => setTimeout(r, 600));
+      setOrderId(`DEMO-${Date.now()}`);
+      setOrderState("success");
+      return;
+    }
+
     try {
-      const res = await fetch("http://localhost:3001/api/order", {
+      const res = await fetch(`${apiUrl}/api/order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items, total: total() }),
@@ -22,17 +32,12 @@ export default function CartSidebar() {
       if (data.success) {
         setOrderId(data.orderId);
         setOrderState("success");
-        // Clear cart items after success
         items.forEach(i => removeItem(i.id, i.size));
       } else {
         setOrderState("error");
       }
     } catch {
-      // Fallback: show success with a local order ID when API is unavailable
-      const localId = `KF-${Date.now()}`;
-      setOrderId(localId);
-      setOrderState("success");
-      items.forEach(i => removeItem(i.id, i.size));
+      setOrderState("error");
     }
   };
 
@@ -70,6 +75,9 @@ export default function CartSidebar() {
                 <div>
                   <p style={{ fontFamily: "var(--font-display)", fontSize: "2.5rem", color: "var(--ink)", letterSpacing: "0.04em" }}>ORDER PLACED</p>
                   <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--muted)", letterSpacing: "0.2em", marginTop: "0.5rem" }}>THANK YOU FOR YOUR DROP</p>
+                  {orderId && orderId.startsWith("DEMO-") && (
+                    <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6rem", color: "var(--accent-2)", letterSpacing: "0.15em", marginTop: "0.5rem" }}>DEMO MODE — NO REAL ORDER PLACED</p>
+                  )}
                   {orderId && (
                     <div className="mt-4 px-4 py-2 rounded-lg" style={{ backgroundColor: "var(--surface-2)", border: "1px solid var(--border)" }}>
                       <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "var(--muted)", letterSpacing: "0.15em" }}>ORDER ID</p>
@@ -96,7 +104,7 @@ export default function CartSidebar() {
                   {items.map(item => (
                     <div key={`${item.id}-${item.size}`} className="flex gap-4 p-4 rounded-xl" style={{ backgroundColor: "var(--background)", border: "1px solid var(--border)" }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-lg" />
+                      <Image src={item.image} alt={item.name} width={80} height={80} sizes="80px" loading="lazy" className="w-20 h-20 object-cover rounded-lg" />
                       <div className="flex-1">
                         <h4 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "var(--ink)", letterSpacing: "0.04em" }}>{item.name}</h4>
                         <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", color: "var(--muted)", letterSpacing: "0.1em" }}>SIZE {item.size}</p>

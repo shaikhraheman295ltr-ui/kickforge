@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useCartStore } from "@/lib/store";
+import Image from "next/image";
+import { useCartStore, useAuthStore, useLoginModalStore } from "@/lib/store";
 import products from "@/server/products.json";
 
 function useCountdown(targetDate: Date) {
@@ -19,22 +20,25 @@ function useCountdown(targetDate: Date) {
 }
 
 export default function SaleSection() {
-  const [target, setTarget] = useState<Date | null>(null);
-  const time = useCountdown(target ?? new Date());
-  const { addItem, openCart } = useCartStore();
-  const saleProducts = products.filter(p => p.onSale);
-
-  useEffect(() => {
+  const getInitialTarget = () => {
+    if (typeof window === "undefined") return null;
     const KEY = "kf-sale-end";
     const stored = localStorage.getItem(KEY);
     if (stored) {
       const ts = parseInt(stored, 10);
-      if (ts > Date.now()) { setTarget(new Date(ts)); return; }
+      if (ts > Date.now()) return new Date(ts);
     }
     const end = new Date(Date.now() + 3 * 24 * 3600 * 1000);
     localStorage.setItem(KEY, String(end.getTime()));
-    setTarget(end);
-  }, []);
+    return end;
+  };
+
+  const [target] = useState<Date | null>(() => getInitialTarget());
+  const time = useCountdown(target ?? new Date());
+  const { addItem, openCart } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
+  const { openLogin } = useLoginModalStore();
+  const saleProducts = products.filter(p => p.onSale);
 
   return (
     <section id="sale" className="relative py-24 px-6 md:px-16" style={{ backgroundColor: "var(--background)" }}>
@@ -44,6 +48,9 @@ export default function SaleSection() {
         <div className="t-stagger">
           <span className="t-stagger-line t-stagger-line--1" style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.3em", color: "var(--accent-2)", textTransform: "uppercase" }}>— 03 / LIMITED TIME</span>
           <h2 className="t-stagger-line t-stagger-line--2" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(4rem, 9vw, 10rem)", lineHeight: 0.85, color: "var(--ink)", letterSpacing: "0.02em" }}>SALE</h2>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.7rem", letterSpacing: "0.15em", color: "var(--muted)", marginTop: "0.5rem", textTransform: "uppercase" }}>
+            Flash drop — limited inventory on select colorways while stock lasts
+          </p>
         </div>
 
         <div className="flex gap-4 items-end">
@@ -67,19 +74,22 @@ export default function SaleSection() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {saleProducts.map(p => (
-          <div key={p.id} className="relative rounded-xl overflow-hidden group" style={{ backgroundColor: "var(--surface)", border: "1px solid rgba(255,45,45,0.2)" }}>
+          <div key={p.id} tabIndex={0} role="group"
+            aria-label={`${p.name} on sale. Press Enter to grab deal.`}
+            onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!isAuthenticated) { openLogin({ id: p.id, name: p.name, price: p.salePrice ?? p.price, image: p.image, size: p.sizes[0], quantity: 1 }); return; } addItem({ id: p.id, name: p.name, price: p.salePrice ?? p.price, image: p.image, size: p.sizes[0], quantity: 1 }); openCart(); } }}
+            className="relative rounded-xl overflow-hidden group" style={{ backgroundColor: "var(--surface)", border: "1px solid rgba(255,45,45,0.2)" }}>
             <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full" style={{ backgroundColor: "var(--accent-2)", fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "#fff", letterSpacing: "0.1em" }}>
               -{Math.round(((p.price - (p.salePrice ?? p.price)) / p.price) * 100)}% OFF
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.image} alt={p.name} className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105" />
+            <Image src={p.image} alt={p.name} width={600} height={600} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" loading="lazy" className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105" />
             <div className="p-6">
               <h3 style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--ink)", letterSpacing: "0.04em" }}>{p.name}</h3>
               <div className="flex items-center gap-3 mt-2">
                 <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent-2)", fontSize: "1.4rem", fontWeight: 700 }}>${p.salePrice}</span>
                 <span style={{ fontFamily: "var(--font-mono)", color: "var(--muted)", fontSize: "0.95rem", textDecoration: "line-through" }}>${p.price}</span>
               </div>
-              <button onClick={() => { addItem({ id: p.id, name: p.name, price: p.salePrice ?? p.price, image: p.image, size: p.sizes[0], quantity: 1 }); openCart(); }}
+              <button onClick={() => { if (!isAuthenticated) { openLogin({ id: p.id, name: p.name, price: p.salePrice ?? p.price, image: p.image, size: p.sizes[0], quantity: 1 }); return; } addItem({ id: p.id, name: p.name, price: p.salePrice ?? p.price, image: p.image, size: p.sizes[0], quantity: 1 }); openCart(); }}
+                aria-label={`Grab deal on ${p.name}`}
                 className="mt-4 w-full py-3 rounded-lg font-bold text-xs tracking-widest transition-all hover:opacity-90 cursor-pointer"
                 style={{ backgroundColor: "var(--accent-2)", color: "#fff", fontFamily: "var(--font-mono)" }}>
                 GRAB DEAL

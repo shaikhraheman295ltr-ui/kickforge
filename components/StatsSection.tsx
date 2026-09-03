@@ -15,29 +15,38 @@ function AnimatedCounter({ target, suffix }: { target: number; suffix: string })
   const ref = useRef<HTMLSpanElement>(null);
   const animated = useRef(false);
 
+  const animate = () => {
+    if (animated.current) return;
+    animated.current = true;
+    const obj = { v: 0 };
+    gsap.to(obj, {
+      v: target,
+      duration: 2,
+      ease: "power3.out",
+      onUpdate: () => setCount(Math.floor(obj.v)),
+    });
+  };
+
   useEffect(() => {
     if (prefersReducedMotion()) { setCount(target); return; }
     const el = ref.current;
     if (!el) return;
+
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { animate(); obs.disconnect(); }
+    }, { threshold: 0.3 });
+    obs.observe(el);
+
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: el,
         start: "top 85%",
         once: true,
-        onEnter: () => {
-          if (animated.current) return;
-          animated.current = true;
-          const obj = { v: 0 };
-          gsap.to(obj, {
-            v: target,
-            duration: 2,
-            ease: "power3.out",
-            onUpdate: () => setCount(Math.floor(obj.v)),
-          });
-        },
+        onEnter: animate,
       });
     }, el);
-    return () => ctx.revert();
+
+    return () => { ctx.revert(); obs.disconnect(); };
   }, [target]);
 
   return <span ref={ref}>{count}{suffix}</span>;

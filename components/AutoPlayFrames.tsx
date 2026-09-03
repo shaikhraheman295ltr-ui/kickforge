@@ -22,9 +22,6 @@ function AutoPlayer({ folder, frames: total, speed = 1, label, prefix = "frame_"
     if (!canvas) return;
     if (prefersReducedMotion()) return;
 
-    const obs = new IntersectionObserver(([e]) => { visibleRef.current = e.isIntersecting; drawPoster(); }, { threshold: 0 });
-    obs.observe(canvas);
-
     const cap = 640;
     const resize = () => { canvas.width = Math.min(canvas.offsetWidth, cap); canvas.height = Math.min(canvas.offsetHeight, cap * 0.75); };
     resize();
@@ -34,6 +31,11 @@ function AutoPlayer({ folder, frames: total, speed = 1, label, prefix = "frame_"
     const loaded: HTMLImageElement[] = new Array(total);
     imagesRef.current = loaded;
     let drawnPoster = false;
+    let isActive = false;
+    const loadedChunks = new Set<number>();
+    const CHUNK_SIZE = 25;
+
+    const getChunk = (index: number) => Math.floor(index / CHUNK_SIZE);
 
     const drawPoster = () => {
       if (drawnPoster || !canvas || !visibleRef.current) return;
@@ -46,13 +48,35 @@ function AutoPlayer({ folder, frames: total, speed = 1, label, prefix = "frame_"
       ctx.drawImage(firstLoaded, (canvas.width - firstLoaded.naturalWidth * scale) / 2, (canvas.height - firstLoaded.naturalHeight * scale) / 2, firstLoaded.naturalWidth * scale, firstLoaded.naturalHeight * scale);
     };
 
-    for (let i = 0; i < total; i++) {
-      const img = new Image();
-      img.onload = () => { loaded[i] = img; drawPoster(); };
-      img.onerror = () => {};
-      img.src = `/frames/${folder}/${prefix}${pad(i + 1)}.jpg`;
-      loaded[i] = img;
-    }
+    const loadChunk = (chunkIdx: number) => {
+      if (loadedChunks.has(chunkIdx) || chunkIdx < 0 || chunkIdx >= Math.ceil(total / CHUNK_SIZE)) return;
+      loadedChunks.add(chunkIdx);
+      const start = chunkIdx * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, total);
+      for (let i = start; i < end; i++) {
+        if (loaded[i]) continue;
+        const img = new Image();
+        img.onload = () => { loaded[i] = img; drawPoster(); };
+        img.onerror = () => {};
+        img.src = `/frames/${folder}/${prefix}${pad(i + 1)}.jpg`;
+        loaded[i] = img;
+      }
+    };
+
+    const obs = new IntersectionObserver(([e]) => {
+      visibleRef.current = e.isIntersecting;
+      if (e.isIntersecting && !isActive) {
+        isActive = true;
+        loadChunk(0);
+        loadChunk(1);
+        animRef.current = requestAnimationFrame(draw);
+      }
+      if (!e.isIntersecting) {
+        drawnPoster = false;
+      }
+      drawPoster();
+    }, { threshold: 0 });
+    obs.observe(canvas);
 
     let speedFactor = speed;
     let lastTime = 0;
@@ -63,6 +87,9 @@ function AutoPlayer({ folder, frames: total, speed = 1, label, prefix = "frame_"
       const advance = 0.4 * speedFactor * (dt / 16.67);
       if (!document.hidden && visibleRef.current) {
         const idx = Math.floor(idxRef.current) % total;
+        const currentChunk = getChunk(idx);
+        loadChunk(currentChunk + 1);
+        loadChunk(currentChunk + 2);
         const img = imagesRef.current[idx];
         if (img && img.complete && img.naturalWidth > 0) {
           const ctx = canvas.getContext("2d");
@@ -77,13 +104,17 @@ function AutoPlayer({ folder, frames: total, speed = 1, label, prefix = "frame_"
       }
       animRef.current = requestAnimationFrame(draw);
     };
-    animRef.current = requestAnimationFrame(draw);
+
     return () => { obs.disconnect(); cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
   }, [folder, total, speed]);
 
+  const fallbackSrc = `/frames/${folder}/${prefix}${String(1).padStart(3, "0")}.jpg`;
+
   return (
     <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}>
-      <canvas ref={canvasRef} className="w-full h-full" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={fallbackSrc} alt={label ? `${label} product animation` : "Product animation"} className="absolute inset-0 w-full h-full object-cover" />
+      <canvas ref={canvasRef} className="relative w-full h-full" role="img" aria-label={label ? `${label} animation` : "Product animation"} />
       {label && (
         <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full" style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}>
           <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.55rem", letterSpacing: "0.15em", color: "rgba(255,255,255,0.5)" }}>{label}</span>

@@ -45,16 +45,11 @@ export default function HeroSection() {
     const loaded: HTMLImageElement[] = new Array(FRAMES);
     imagesRef.current = loaded;
     let loadedCount = 0;
-    let lastReportedMilestone = 0;
     let started = false;
+    const loadedChunks = new Set<number>();
+    const CHUNK_SIZE = 30;
 
-    for (let i = 0; i < FRAMES; i++) {
-      const img = new Image();
-      img.onload = () => { loadedCount++; loaded[i] = img; const pct = Math.round((loadedCount / FRAMES) * 100); if (pct >= lastReportedMilestone + 5) { lastReportedMilestone = pct; setLoadProgress(pct); window.dispatchEvent(new CustomEvent("hero-progress", { detail: { percent: pct } })); } drawPoster(); };
-      img.onerror = () => { loadedCount++; };
-      img.src = frameUrl(i);
-      loaded[i] = img;
-    }
+    const getChunk = (index: number) => Math.floor(index / CHUNK_SIZE);
 
     const drawPoster = () => {
       if (started) return;
@@ -65,6 +60,36 @@ export default function HeroSection() {
       ctx.drawImage(firstLoaded, 0, 0, canvas.width, canvas.height);
     };
 
+    const loadChunk = (chunkIdx: number) => {
+      if (loadedChunks.has(chunkIdx) || chunkIdx < 0 || chunkIdx >= Math.ceil(FRAMES / CHUNK_SIZE)) return;
+      loadedChunks.add(chunkIdx);
+      const start = chunkIdx * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, FRAMES);
+      for (let i = start; i < end; i++) {
+        if (loaded[i]) continue;
+        const img = new Image();
+        img.onload = () => {
+          loadedCount++;
+          loaded[i] = img;
+          const pct = Math.round((loadedCount / FRAMES) * 100);
+          setLoadProgress(pct);
+          window.dispatchEvent(new CustomEvent("hero-progress", { detail: { percent: pct } }));
+          drawPoster();
+        };
+        img.onerror = () => {
+          loadedCount++;
+          const pct = Math.round((loadedCount / FRAMES) * 100);
+          setLoadProgress(pct);
+          window.dispatchEvent(new CustomEvent("hero-progress", { detail: { percent: pct } }));
+        };
+        img.src = frameUrl(i);
+        loaded[i] = img;
+      }
+    };
+
+    loadChunk(0);
+    loadChunk(1);
+
     let lastTime = 0;
     const draw = (time: number) => {
       if (!lastTime) lastTime = time;
@@ -73,6 +98,9 @@ export default function HeroSection() {
       const speed = 0.4 * (dt / 16.67);
       if (!document.hidden && visibleRef.current) {
         const idx = Math.floor(idxRef.current) % FRAMES;
+        const currentChunk = getChunk(idx);
+        loadChunk(currentChunk + 1);
+        loadChunk(currentChunk + 2);
         const img = imagesRef.current[idx];
         if (img && img.complete && img.naturalWidth > 0) {
           const ctx = canvas.getContext("2d");
@@ -108,7 +136,7 @@ export default function HeroSection() {
       COPY_SEQUENCE.forEach((item, i) => {
         const el = copyRefs.current[i];
         if (!el) return;
-        const tl = gsap.timeline({ scrollTrigger: { trigger: wrapper, start: `${item.start}% top`, end: `${item.end}% top`, scrub: 1 } });
+        const tl = gsap.timeline({ scrollTrigger: { trigger: wrapper, start: `${item.start}% top`, end: `${item.end}% top`, scrub: 0.5 } });
         tl.fromTo(el, { opacity: 0, z: -1200, scale: 0.5, rotationX: 12 }, { opacity: 1, z: 0, scale: 1, rotationX: 0, duration: 0.4, ease: "power2.out" })
           .to(el, { opacity: 0, z: 1200, scale: 2, duration: 0.6, ease: "power2.in" });
       });
@@ -145,8 +173,8 @@ export default function HeroSection() {
         <div className="relative w-full max-w-[90vw] text-center" style={{ transformStyle: "preserve-3d" }}>
           {COPY_SEQUENCE.map((item, i) => (
             <div key={i} ref={el => { copyRefs.current[i] = el; }}
-              className="absolute inset-0 flex items-center justify-center opacity-0 will-change-transform"
-              style={{ backfaceVisibility: "hidden" }}>
+              className="absolute inset-0 flex items-center justify-center opacity-0"
+              style={{ willChange: "transform, opacity", transform: "translateZ(0)", backfaceVisibility: "hidden" }}>
               {item.type === "brand" ? (
                 <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(5rem, 15vw, 16rem)", lineHeight: 0.85, letterSpacing: "0.04em", color: "#FFFFFF", textShadow: "0 0 80px rgba(139,92,246,0.25), 0 4px 40px rgba(0,0,0,0.8)" }}>
                   {item.text}
@@ -173,6 +201,9 @@ export default function HeroSection() {
           <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(4rem, 12vw, 14rem)", lineHeight: 0.85, letterSpacing: "0.02em", color: "var(--accent)" }}>
             PURPOSE
           </h2>
+          <p style={{ marginTop: "1rem", fontFamily: "var(--font-body)", fontSize: "clamp(0.9rem, 2vw, 1.2rem)", color: "rgba(255,255,255,0.6)", maxWidth: "50ch", marginLeft: "auto", marginRight: "auto" }}>
+            Premium performance footwear engineered for athletes who demand more from every step.
+          </p>
           <p style={{ marginTop: "2rem", fontFamily: "var(--font-mono)", fontSize: "0.75rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(255,255,255,0.4)" }}>
             KICKFORGE — Where Motion Meets Craft
           </p>
