@@ -23,7 +23,8 @@ export default function ScrollProgress() {
   }, []);
 
   return (
-    <div className="fixed top-8 left-0 w-full h-[2px] z-[300]" style={{ backgroundColor: "rgba(255,255,255,0.05)" }}>
+    <div className="fixed top-9 left-0 w-full h-[2px] z-[300] hidden sm:block"
+         style={{ backgroundColor: "rgba(255,255,255,0.05)" }}>
       <div className="h-full transition-all duration-150 ease-out" style={{ width: `${progress * 100}%`, backgroundColor: "var(--accent)", boxShadow: "0 0 8px rgba(139,92,246,0.5)" }} />
     </div>
   );

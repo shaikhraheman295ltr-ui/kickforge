@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, Minus, Plus, ShoppingBag } from "lucide-react";
@@ -9,6 +9,25 @@ export default function CartSidebar() {
   const { items, isOpen, closeCart, removeItem, updateQty, total } = useCartStore();
   const [orderState, setOrderState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [orderId, setOrderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") handleClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      return;
+    }
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    return () => { document.body.style.overflow = ""; document.body.style.paddingRight = ""; };
+  }, [isOpen]);
 
   const handleCheckout = async () => {
     setOrderState("loading");
@@ -55,12 +74,14 @@ export default function CartSidebar() {
             onClick={handleClose} aria-label="Close cart overlay" role="button" tabIndex={-1} />
           <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
-            className="fixed top-0 right-0 h-full w-full max-w-md z-[500] flex flex-col"
-            style={{ backgroundColor: "var(--surface)", borderLeft: "1px solid var(--border)" }}>
+            className="bottom-sheet-mobile fixed top-0 right-0 h-full w-full max-w-md z-[500] flex flex-col overflow-hidden"
+            style={{ backgroundColor: "var(--surface)", borderLeft: "1px solid var(--border)" }}
+            aria-modal="true" role="dialog" aria-labelledby="cart-title">
+            <div className="grabber" aria-hidden="true" />
 
             {/* Header */}
             <div className="flex items-center justify-between p-6" style={{ borderBottom: "1px solid var(--border)" }}>
-              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "2rem", letterSpacing: "0.08em", color: "var(--ink)" }}>YOUR BAG</h2>
+              <h2 id="cart-title" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.5rem, 6vw, 2rem)", letterSpacing: "0.08em", color: "var(--ink)" }}>YOUR BAG</h2>
               <button onClick={handleClose} aria-label="Close cart" className="w-10 h-10 flex items-center justify-center rounded-full cursor-pointer" style={{ backgroundColor: "var(--surface-2)", color: "var(--muted)" }}>
                 <X size={16} />
               </button>

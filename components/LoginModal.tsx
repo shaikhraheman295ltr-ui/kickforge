@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Eye, EyeOff, ArrowRight, Check } from "lucide-react";
@@ -36,6 +36,25 @@ export default function LoginModal() {
     setStatus("idle");
     setShowPw(false);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") handleClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      return;
+    }
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    return () => { document.body.style.overflow = ""; document.body.style.paddingRight = ""; };
+  }, [isOpen]);
 
   const handleClose = () => {
     closeLogin();
@@ -86,13 +105,16 @@ export default function LoginModal() {
             onClick={handleClose} />
           <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
-            className="fixed inset-0 z-[500] flex items-center justify-center p-4 pointer-events-none">
-            <div className="pointer-events-auto w-full max-w-[420px]" key={shakeKey}>
-              <div className="rounded-2xl p-8" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}>
-                <div className="flex items-center justify-between mb-6">
-                  <span style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", letterSpacing: "0.08em", color: "var(--ink)" }}>
-                    {mode === "login" ? "SIGN IN" : "SIGN UP"}
-                  </span>
+            className="fixed inset-0 z-[500] flex items-end md:items-center justify-center md:p-4 pointer-events-none"
+            role="dialog" aria-modal="true" aria-labelledby="login-title">
+            <div className="pointer-events-auto w-full md:max-w-[420px] md:rounded-2xl rounded-t-2xl rounded-b-none md:p-8 p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] max-h-[100dvh] overflow-y-auto"
+              style={{ backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
+              key={shakeKey}>
+              <div className="grabber md:hidden" aria-hidden="true" />
+              <div className="flex items-center justify-between mb-6">
+                <span id="login-title" style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.25rem, 5vw, 1.5rem)", letterSpacing: "0.08em", color: "var(--ink)" }}>
+                  {mode === "login" ? "SIGN IN" : "SIGN UP"}
+                </span>
                   <button onClick={handleClose} aria-label="Close sign in dialog" className="w-9 h-9 flex items-center justify-center rounded-full cursor-pointer" style={{ backgroundColor: "var(--surface-2)", color: "var(--muted)" }}>
                     <X size={15} />
                   </button>
@@ -175,7 +197,6 @@ export default function LoginModal() {
                     </button>
                   </form>
                 )}
-              </div>
             </div>
           </motion.div>
         </>

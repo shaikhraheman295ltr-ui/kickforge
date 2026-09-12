@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCartStore, useAuthStore, useLoginModalStore } from "@/lib/store";
+import { useMediaQuery } from "@/lib/utils";
 import products from "@/server/products.json";
 
 export default function FeaturedSection() {
@@ -46,19 +47,22 @@ function TiltCard({ product, index, onAddToBag }: { product: typeof products[0];
   const [activeColor, setActiveColor] = useState(product.colors[0]);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
   const rafRef = useRef<number>(0);
+  const isDesktop = useMediaQuery("(hover: hover) and (pointer: fine)");
+  const showCta = !isDesktop || hovered;
 
-  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
       if (!cardRef.current) return;
       const rect = cardRef.current.getBoundingClientRect();
       const x = (e.clientX - rect.left) / rect.width - 0.5;
       const y = (e.clientY - rect.top) / rect.height - 0.5;
-      cardRef.current.style.transform = `perspective(1000px) rotateX(${-y * 14}deg) rotateY(${x * 14}deg) scale(1.02)`;
+      const tilt = isDesktop ? 14 : 6;
+      cardRef.current.style.transform = `perspective(1000px) rotateX(${-y * tilt}deg) rotateY(${x * tilt}deg) scale(1.02)`;
     });
   };
 
-  const onMouseLeave = () => {
+  const onPointerLeave = () => {
     cancelAnimationFrame(rafRef.current);
     if (!cardRef.current) return;
     cardRef.current.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)";
@@ -95,7 +99,9 @@ function TiltCard({ product, index, onAddToBag }: { product: typeof products[0];
     <div ref={cardRef} tabIndex={0} role="group"
       aria-label={`${product.name} product card. Press Enter to view details.`}
       onKeyDown={onKeyDown}
-      onMouseMove={onMouseMove} onMouseEnter={() => setHovered(true)} onMouseLeave={onMouseLeave}
+      onPointerMove={onPointerMove}
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={onPointerLeave}
       className="relative aspect-[3/4] rounded-xl overflow-hidden cursor-pointer group"
       style={{ transition: "transform 0.1s ease", backgroundColor: "var(--surface)", border: "1px solid var(--border)" }}
     >
@@ -137,7 +143,7 @@ function TiltCard({ product, index, onAddToBag }: { product: typeof products[0];
           ))}
         </div>
 
-        <div className="overflow-hidden" style={{ maxHeight: hovered ? "100px" : "0px", transition: "max-height 0.4s cubic-bezier(0.16,1,0.3,1)" }}>
+        <div className="overflow-hidden" style={{ maxHeight: showCta ? "240px" : "0px", transition: "max-height 0.4s cubic-bezier(0.16,1,0.3,1)" }}>
           {/* Size selector */}
           <div className="flex flex-wrap gap-1 mt-3">
             {product.sizes.map(s => (
@@ -156,12 +162,12 @@ function TiltCard({ product, index, onAddToBag }: { product: typeof products[0];
           <div className="flex gap-2 mt-2">
             <button onClick={() => onAddToBag(selectedSize)}
               className="flex-1 py-3 rounded-lg text-black font-bold text-xs tracking-widest transition-opacity cursor-pointer"
-              style={{ backgroundColor: "var(--accent)", fontFamily: "var(--font-mono)", opacity: hovered ? 1 : 0, transition: "opacity 0.3s ease 0.1s" }}>
+              style={{ backgroundColor: "var(--accent)", fontFamily: "var(--font-mono)", opacity: showCta ? 1 : 0, transition: "opacity 0.3s ease 0.1s" }}>
               ADD TO BAG
             </button>
             <button onClick={() => router.push(`/product/${product.id}`)}
               className="py-3 px-3 rounded-lg text-xs tracking-widest transition-opacity cursor-pointer"
-              style={{ fontFamily: "var(--font-mono)", border: "1px solid var(--border)", color: "var(--muted)", opacity: hovered ? 1 : 0, transition: "opacity 0.3s ease 0.15s" }}>
+              style={{ fontFamily: "var(--font-mono)", border: "1px solid var(--border)", color: "var(--muted)", opacity: showCta ? 1 : 0, transition: "opacity 0.3s ease 0.15s" }}>
               VIEW
             </button>
           </div>

@@ -30,6 +30,13 @@ export default function HeroSection() {
   const [loadProgress, setLoadProgress] = useState(0);
 
   const cap = 1280;
+  const isMobileRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      isMobileRef.current = window.matchMedia("(max-width: 768px)").matches;
+    }
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -38,7 +45,16 @@ export default function HeroSection() {
     const obs = new IntersectionObserver(([e]) => { visibleRef.current = e.isIntersecting; }, { threshold: 0.1 });
     obs.observe(canvas);
 
-    const resize = () => { canvas.width = Math.min(window.innerWidth, cap); canvas.height = Math.min(window.innerHeight, cap * 0.5625); };
+    const isMobile = () => window.matchMedia("(max-width: 768px)").matches;
+    const resize = () => {
+      const mobile = isMobile();
+      const maxW = mobile ? 480 : cap;
+      const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
+      canvas.width = Math.min(window.innerWidth, maxW) * dpr;
+      canvas.height = canvas.width * 0.5625;
+      canvas.style.width = "100%";
+      canvas.style.height = "100%";
+    };
     resize();
     window.addEventListener("resize", resize);
 
@@ -87,8 +103,9 @@ export default function HeroSection() {
       }
     };
 
+    const mobileInit = isMobileRef.current;
     loadChunk(0);
-    loadChunk(1);
+    if (!mobileInit) loadChunk(1);                       // mobile: lazy-load first chunk only
 
     let lastTime = 0;
     const draw = (time: number) => {
@@ -160,7 +177,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="hero" className="sticky top-0 w-full h-screen overflow-hidden" style={{ zIndex: 10 }}>
+    <section ref={sectionRef} id="hero" className="sticky top-0 w-full h-[100svh] overflow-hidden" style={{ zIndex: 10 }}>
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" aria-hidden="true" />
 
       <div ref={overlayRef} className="absolute inset-0 pointer-events-none z-[2]" aria-hidden="true"

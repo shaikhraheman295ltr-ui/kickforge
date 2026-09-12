@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { useEffect, useState } from "react";
 
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -9,3 +10,15 @@ export const mapRange = (v: number, inMin: number, inMax: number, outMin: number
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 export const isMobile = () => typeof window !== "undefined" && window.innerWidth < 768;
+
+export function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    setMatches(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setMatches(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [query]);
+  return matches;
+}

@@ -16,6 +16,7 @@ import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 import CartSidebar from "@/components/CartSidebar";
 import LoginModal from "@/components/LoginModal";
+import GallerySection from "@/components/GallerySection";
 
 import AtmosphereLayer from "@/components/AtmosphereLayer";
 import MarqueeBar from "@/components/MarqueeBar";
@@ -24,7 +25,9 @@ import Starfield from "@/components/Starfield";
 
 export default function Home() {
   useEffect(() => {
-    const lenis = initLenis();
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const lenis = isMobile || reduced ? null : initLenis();
     let raf: ((t: number) => void) | null = null;
     if (lenis) {
       lenis.on("scroll", ScrollTrigger.update);
@@ -40,7 +43,7 @@ export default function Home() {
     const staggerEls = document.querySelectorAll(".t-stagger");
     staggerEls.forEach(el => staggerObs.observe(el));
 
-    return () => { clearTimeout(refresh); if (raf) gsap.ticker.remove(raf); destroyLenis(); staggerObs.disconnect(); };
+    return () => { clearTimeout(refresh); if (raf) gsap.ticker.remove(raf); if (lenis) destroyLenis(); staggerObs.disconnect(); };
   }, []);
 
   return (
@@ -55,7 +58,7 @@ export default function Home() {
       <CartSidebar />
       <LoginModal />
       <AtmosphereLayer type="dust" opacity={0.08} speed={0.2} />
-      <main className="relative z-10">
+      <main id="main-content" className="relative z-10">
         <div id="hero-root" style={{ height: "400vh", position: "relative", marginTop: "40px" }}>
           <HeroSection />
         </div>
@@ -64,6 +67,7 @@ export default function Home() {
         <ExploreSection />
         <SaleSection />
         <AutoPlayFrames />
+        <GallerySection />
         <FinalCTA />
         <Footer />
       </main>

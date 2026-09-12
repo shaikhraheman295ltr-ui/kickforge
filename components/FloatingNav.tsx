@@ -43,6 +43,31 @@ export default function FloatingNav() {
   }, [menuState]);
 
   useEffect(() => {
+    if (menuState === "open") {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.overflow = "hidden";
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    } else if (menuState === "closed") {
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    }
+    return () => { document.body.style.overflow = ""; document.body.style.paddingRight = ""; };
+  }, [menuState]);
+
+  useEffect(() => {
+    if (menuState !== "open") return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeMenu(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuState]);
+
+  useEffect(() => {
+    const onResize = () => { if (window.innerWidth >= 768 && menuState !== "closed") setMenuState("closing"); };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [menuState]);
+
+  useEffect(() => {
     let ticking = false;
     let rafId = 0;
     const onScroll = () => {
@@ -119,7 +144,12 @@ export default function FloatingNav() {
         </div>
       ) : (
         <>
-          <button className="glass w-12 h-12 rounded-full flex items-center justify-center cursor-pointer" onClick={toggleMenu} aria-label={menuState === "open" ? "Close menu" : "Open menu"}>
+          <button className="glass w-12 h-12 rounded-full flex items-center justify-center cursor-pointer"
+            onClick={toggleMenu}
+            aria-label={menuState === "open" ? "Close menu" : "Open menu"}
+            aria-expanded={menuState === "open"}
+            aria-controls="mobile-nav"
+            aria-haspopup="menu">
             <div className="t-icon-swap" data-state={menuState === "open" ? "b" : "a"}>
               <span className="t-icon" data-icon="a" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Menu size={18} style={{ color: "var(--accent)" }} />
@@ -129,19 +159,27 @@ export default function FloatingNav() {
               </span>
             </div>
           </button>
-          <div ref={dropdownRef} data-origin="top-right"
-            className={`absolute top-16 right-0 w-48 py-3 px-2 rounded-2xl glass t-dropdown ${menuState === "open" ? "is-open" : menuState === "closing" ? "is-closing" : ""}`}>
+          {menuState === "open" && (
+            <div className="mobile-menu-overlay md:hidden" onClick={closeMenu} aria-hidden="true" />
+          )}
+          <div ref={dropdownRef} id="mobile-nav" data-origin="top-right"
+            className={`absolute top-16 right-2 w-[min(92vw,18rem)] py-3 px-2 rounded-2xl glass t-dropdown ${menuState === "open" ? "is-open" : menuState === "closing" ? "is-closing" : ""}`}
+            role="menu">
             {NAV_ITEMS.map(item => (
               <button key={item.href} onClick={() => navTo(item.href)} aria-label={`Navigate to ${item.label}`}
-                className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-medium tracking-widest text-[var(--muted)] hover:text-[var(--ink)] transition-colors cursor-pointer">
+                className="w-full text-left px-4 py-3 rounded-xl text-xs font-medium tracking-widest text-[var(--muted)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+                role="menuitem">
                 {item.label}
               </button>
             ))}
             <button onClick={() => { openLogin(); closeMenu(); }} aria-label="Sign in"
-              className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-medium tracking-widest text-[var(--muted)] hover:text-[var(--ink)] transition-colors cursor-pointer">
+              className="w-full text-left px-4 py-3 rounded-xl text-xs font-medium tracking-widest text-[var(--muted)] hover:text-[var(--ink)] transition-colors cursor-pointer"
+              role="menuitem">
               {isAuthenticated && user ? `PROFILE (${user.name[0].toUpperCase()})` : "LOGIN"}
             </button>
-            <button onClick={() => { openCart(); closeMenu(); }} aria-label="Open shopping bag" className="w-full text-left px-4 py-3 rounded-xl text-[11px] font-medium tracking-widest text-[var(--accent)] cursor-pointer">
+            <button onClick={() => { openCart(); closeMenu(); }} aria-label="Open shopping bag"
+              className="w-full text-left px-4 py-3 rounded-xl text-xs font-medium tracking-widest text-[var(--accent)] cursor-pointer"
+              role="menuitem">
               BAG {cartCount > 0 && `(${cartCount})`}
             </button>
           </div>
