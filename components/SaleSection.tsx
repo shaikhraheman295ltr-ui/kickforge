@@ -44,20 +44,20 @@ function Countdown({ target }: { target: Date | null }) {
 }
 
 export default function SaleSection() {
-  const getInitialTarget = () => {
-    if (typeof window === "undefined") return null;
+  // Resolved after mount: localStorage/Date are unavailable during SSR, so doing
+  // this in the initial render made the server output ("--") differ from the
+  // client output (numbers) and triggered a hydration mismatch.
+  const [target, setTarget] = useState<Date | null>(null);
+  useEffect(() => {
     const KEY = "kf-sale-end";
     const stored = localStorage.getItem(KEY);
-    if (stored) {
-      const ts = parseInt(stored, 10);
-      if (ts > Date.now()) return new Date(ts);
-    }
+    const storedTs = stored ? parseInt(stored, 10) : NaN;
+    if (storedTs > Date.now()) { setTarget(new Date(storedTs)); return; }
     const end = new Date(Date.now() + 3 * 24 * 3600 * 1000);
     localStorage.setItem(KEY, String(end.getTime()));
-    return end;
-  };
+    setTarget(end);
+  }, []);
 
-  const [target] = useState<Date | null>(() => getInitialTarget());
   const { addItem, openCart } = useCartStore();
   const { isAuthenticated } = useAuthStore();
   const { openLogin } = useLoginModalStore();
