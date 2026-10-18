@@ -14,10 +14,9 @@
   --border: rgba(255,255,255,0.06);
   --glass: rgba(255,255,255,0.04);
 
-  --font-display: 'Bebas Neue', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-mono: 'Space Mono', monospace;
-  --font-luxury: 'Cormorant', serif;
+  /* --font-display / --font-body / --font-mono are provided by next/font
+     (see app/layout.tsx). Do not redefine them here or they will shadow the
+     self-hosted families. */
 
   --ease-kick: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-out-kick: cubic-bezier(0.16, 1, 0.3, 1);

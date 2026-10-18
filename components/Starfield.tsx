@@ -11,6 +11,7 @@ export default function Starfield({ opacity = 0.6, speed = 0.15 }: { opacity?: n
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(pointer: coarse)").matches) return;
 
     let isActive = true;
     const obs = new IntersectionObserver(([e]) => { isActive = e.isIntersecting; }, { threshold: 0 });
@@ -49,5 +50,5 @@ export default function Starfield({ opacity = 0.6, speed = 0.15 }: { opacity?: n
     return () => { obs.disconnect(); cancelAnimationFrame(animRef.current); window.removeEventListener("resize", resize); };
   }, [speed]);
 
-  return <canvas ref={canvasRef} className="fixed inset-0 w-full h-full pointer-events-none z-0" style={{ opacity }} aria-hidden="true" />;
+  return <canvas ref={canvasRef} className="starfield-canvas fixed inset-0 w-full h-full pointer-events-none z-0" style={{ opacity }} aria-hidden="true" />;
 }

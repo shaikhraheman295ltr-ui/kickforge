@@ -19,6 +19,30 @@ function useCountdown(targetDate: Date) {
   return time;
 }
 
+// Isolated so the 1s tick only re-renders these four boxes, not the product grid.
+function Countdown({ target }: { target: Date | null }) {
+  const time = useCountdown(target ?? new Date());
+  return (
+    <div className="flex gap-4 items-end">
+      {target ? [{ v: time.d, l: "DAYS" }, { v: time.h, l: "HRS" }, { v: time.m, l: "MIN" }, { v: time.s, l: "SEC" }].map(({ v, l }) => (
+        <div key={l} className="flex flex-col items-center gap-1">
+          <div className="w-16 h-16 flex items-center justify-center rounded-xl" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--accent-2)", boxShadow: "0 0 20px rgba(255,45,45,0.15)" }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "1.6rem", fontWeight: 700, color: "var(--accent-2)" }}>{String(v).padStart(2, "0")}</span>
+          </div>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.2em", color: "var(--muted)" }}>{l}</span>
+        </div>
+      )) : [{ l: "DAYS" }, { l: "HRS" }, { l: "MIN" }, { l: "SEC" }].map(({ l }) => (
+        <div key={l} className="flex flex-col items-center gap-1">
+          <div className="w-16 h-16 flex items-center justify-center rounded-xl" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--accent-2)" }}>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "1.6rem", fontWeight: 700, color: "var(--accent-2)" }}>--</span>
+          </div>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.2em", color: "var(--muted)" }}>{l}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function SaleSection() {
   const getInitialTarget = () => {
     if (typeof window === "undefined") return null;
@@ -34,7 +58,6 @@ export default function SaleSection() {
   };
 
   const [target] = useState<Date | null>(() => getInitialTarget());
-  const time = useCountdown(target ?? new Date());
   const { addItem, openCart } = useCartStore();
   const { isAuthenticated } = useAuthStore();
   const { openLogin } = useLoginModalStore();
@@ -53,23 +76,7 @@ export default function SaleSection() {
           </p>
         </div>
 
-        <div className="flex gap-4 items-end">
-          {target ? [{ v: time.d, l: "DAYS" }, { v: time.h, l: "HRS" }, { v: time.m, l: "MIN" }, { v: time.s, l: "SEC" }].map(({ v, l }) => (
-            <div key={l} className="flex flex-col items-center gap-1">
-              <div className="w-16 h-16 flex items-center justify-center rounded-xl" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--accent-2)", boxShadow: "0 0 20px rgba(255,45,45,0.15)" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "1.6rem", fontWeight: 700, color: "var(--accent-2)" }}>{String(v).padStart(2, "0")}</span>
-              </div>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.2em", color: "var(--muted)" }}>{l}</span>
-            </div>
-          )) : [{ l: "DAYS" }, { l: "HRS" }, { l: "MIN" }, { l: "SEC" }].map(({ l }) => (
-            <div key={l} className="flex flex-col items-center gap-1">
-              <div className="w-16 h-16 flex items-center justify-center rounded-xl" style={{ backgroundColor: "var(--surface)", border: "1px solid var(--accent-2)" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "1.6rem", fontWeight: 700, color: "var(--accent-2)" }}>--</span>
-              </div>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.5rem", letterSpacing: "0.2em", color: "var(--muted)" }}>{l}</span>
-            </div>
-          ))}
-        </div>
+        <Countdown target={target} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">

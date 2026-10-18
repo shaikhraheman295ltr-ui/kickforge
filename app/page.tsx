@@ -7,16 +7,21 @@ import Crosshair from "@/components/Crosshair";
 import Preloader from "@/components/Preloader";
 import FloatingNav from "@/components/FloatingNav";
 import HeroSection from "@/components/HeroSection";
-import FeaturedSection from "@/components/FeaturedSection";
-import ExploreSection from "@/components/ExploreSection";
-import SaleSection from "@/components/SaleSection";
-import StatsSection from "@/components/StatsSection";
-import AutoPlayFrames from "@/components/AutoPlayFrames";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 import CartSidebar from "@/components/CartSidebar";
 import LoginModal from "@/components/LoginModal";
-import GallerySection from "@/components/GallerySection";
+import dynamic from "next/dynamic";
+
+// Below-the-fold sections are code-split so their JS is not part of the initial
+// route bundle. They still render on the server (default ssr: true), so there is
+// no SEO or layout-shift cost.
+const FeaturedSection = dynamic(() => import("@/components/FeaturedSection"));
+const StatsSection = dynamic(() => import("@/components/StatsSection"));
+const ExploreSection = dynamic(() => import("@/components/ExploreSection"));
+const SaleSection = dynamic(() => import("@/components/SaleSection"));
+const AutoPlayFrames = dynamic(() => import("@/components/AutoPlayFrames"));
+const GallerySection = dynamic(() => import("@/components/GallerySection"));
 
 import AtmosphereLayer from "@/components/AtmosphereLayer";
 import MarqueeBar from "@/components/MarqueeBar";

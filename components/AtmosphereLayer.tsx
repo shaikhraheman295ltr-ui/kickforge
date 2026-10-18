@@ -11,6 +11,7 @@ export default function AtmosphereLayer({ type, opacity = 0.3, speed = 1 }: { ty
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(pointer: coarse)").matches) return;
 
     let isActive = true;
     const obs = new IntersectionObserver(([e]) => { isActive = e.isIntersecting; }, { threshold: 0 });
@@ -56,5 +57,5 @@ export default function AtmosphereLayer({ type, opacity = 0.3, speed = 1 }: { ty
     return () => { obs.disconnect(); cancelAnimationFrame(animRef.current); };
   }, [type, speed]);
 
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity }} aria-hidden="true" />;
+  return <canvas ref={canvasRef} className="atmosphere-canvas absolute inset-0 w-full h-full pointer-events-none" style={{ opacity }} aria-hidden="true" />;
 }
