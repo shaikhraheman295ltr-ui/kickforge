@@ -5,6 +5,7 @@ import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getLenis } from "@/lib/lenis";
 import { useCartStore, useAuthStore, useLoginModalStore } from "@/lib/store";
+import { useRouter } from "next/navigation";
 
 const NAV_ITEMS = [
   { label: "HOME",    href: "#hero" },
@@ -14,6 +15,7 @@ const NAV_ITEMS = [
 ];
 
 export default function FloatingNav() {
+  const router = useRouter();
   const [visible, setVisible] = useState(false);
   const [active, setActive] = useState("hero");
   const [menuState, setMenuState] = useState<"closed" | "open" | "closing">("closed");
@@ -115,7 +117,7 @@ export default function FloatingNav() {
     >
       {isDesktop ? (
         <div className="flex items-center gap-1 px-2 py-2 rounded-full glass">
-          <button onClick={() => { window.location.href = "/login"; }} className="font-mono text-[var(--accent)] text-xs tracking-widest px-3 mr-2 font-bold hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-display)", fontSize: "18px", background: "none", border: "none", cursor: "pointer" }}>KF</button>
+          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/login"); }} className="font-mono text-[var(--accent)] text-xs tracking-widest px-3 mr-2 font-bold hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-display)", fontSize: "18px", background: "none", border: "none", cursor: "pointer", pointerEvents: "auto" }}>KF</button>
           {NAV_ITEMS.map(item => (
             <button key={item.href} onClick={() => navTo(item.href)} aria-label={`Navigate to ${item.label}`}
               className={cn("relative px-4 py-2 rounded-full text-[10px] font-medium tracking-[0.18em] transition-all duration-300 cursor-pointer",
