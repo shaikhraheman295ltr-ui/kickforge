@@ -29,6 +29,18 @@ function validatePassword(value: string, mode: Mode): string {
   return "";
 }
 
+/**
+ * Where to go after signing in. The middleware puts the page the visitor was
+ * trying to reach in `?next=`, so deep links survive the login detour. Only
+ * same-site paths are honoured — anything else would be an open redirect.
+ */
+function safeNext(): string {
+  if (typeof window === "undefined") return "/";
+  const next = new URLSearchParams(window.location.search).get("next");
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return "/";
+  return next;
+}
+
 export default function BrutalistLogin() {
   const router = useRouter();
   const { login, signup, isAuthenticated, checkSession } = useAuthStore();
@@ -56,7 +68,7 @@ export default function BrutalistLogin() {
   const justAuthedRef = useRef(false);
   useEffect(() => { checkSession(); }, [checkSession]);
   useEffect(() => {
-    if (isAuthenticated && !justAuthedRef.current) router.push("/");
+    if (isAuthenticated && !justAuthedRef.current) router.replace(safeNext());
   }, [isAuthenticated, router]);
 
   const loading = status === "loading";
@@ -156,7 +168,7 @@ export default function BrutalistLogin() {
       if (!ok) throw new Error("Authentication failed");
 
       setStatus("success");
-      window.setTimeout(() => router.push("/"), 1200);
+      window.setTimeout(() => router.push(safeNext()), 1200);
     } catch (err) {
       justAuthedRef.current = false;
       setStatus("idle");
@@ -181,7 +193,7 @@ export default function BrutalistLogin() {
       justAuthedRef.current = true;
       await login(`${provider}@kickforge.com`, "social");
       setStatus("success");
-      window.setTimeout(() => router.push("/"), 1200);
+      window.setTimeout(() => router.push(safeNext()), 1200);
     } catch {
       justAuthedRef.current = false;
       setStatus("idle");
@@ -190,8 +202,6 @@ export default function BrutalistLogin() {
   };
 
   /* ------------------------------------------------------------------- skip */
-
-  const onSkip = () => router.push("/");
 
   const onForgot = () =>
     setAlert("Password reset is not connected in this demo.");
@@ -446,13 +456,7 @@ export default function BrutalistLogin() {
         </button>
       </div>
 
-      {/* Skip — leave without signing in */}
-      <button className="btn btn--skip" type="button" onClick={onSkip} id="skip-btn">
-        Continue as guest
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
-          <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="square" />
-        </svg>
-      </button>
+      {/* Login is mandatory — there is no way around this page. */}
 
       <p className="footer-note">
         {isSignup ? "Already have an account?" : "No account yet?"}

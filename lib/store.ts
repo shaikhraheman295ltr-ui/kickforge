@@ -1,4 +1,10 @@
 import { create } from "zustand";
+import {
+  clearAuthCookie,
+  readAuthCookie,
+  writeAuthCookie,
+  type SessionUser,
+} from "./authCookie";
 
 export interface CartItem {
   id: number;
@@ -30,30 +36,63 @@ interface AuthState {
   checkSession: () => void;
 }
 
+/* Keep localStorage and the middleware cookie in step. */
+function persistSession(user: SessionUser): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("kf-auth", JSON.stringify(user));
+  writeAuthCookie(user);
+}
+
+function dropSession(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem("kf-auth");
+  clearAuthCookie();
+}
+
 export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   user: null,
   login: async (_email, _password) => {
     await new Promise(r => setTimeout(r, 1200));
-    set({ isAuthenticated: true, user: { name: _email.split("@")[0], email: _email } });
-    if (typeof window !== "undefined") localStorage.setItem("kf-auth", JSON.stringify({ name: _email.split("@")[0], email: _email }));
+    const user = { name: _email.split("@")[0], email: _email };
+    set({ isAuthenticated: true, user });
+    persistSession(user);
     return true;
   },
   signup: async (name, email, _password) => {
     await new Promise(r => setTimeout(r, 1400));
-    set({ isAuthenticated: true, user: { name, email } });
-    if (typeof window !== "undefined") localStorage.setItem("kf-auth", JSON.stringify({ name, email }));
+    const user = { name, email };
+    set({ isAuthenticated: true, user });
+    persistSession(user);
     return true;
   },
   logout: () => {
     set({ isAuthenticated: false, user: null });
-    if (typeof window !== "undefined") localStorage.removeItem("kf-auth");
+    dropSession();
   },
   checkSession: () => {
-    if (typeof window !== "undefined") {
-      const raw = localStorage.getItem("kf-auth");
-      if (raw) try { const u = JSON.parse(raw); set({ isAuthenticated: true, user: u }); } catch { /* ignore */ }
+    if (typeof window === "undefined") return;
+
+    /* The cookie is what the middleware gates on, so trust it first. */
+    const fromCookie = readAuthCookie();
+    if (fromCookie) {
+      set({ isAuthenticated: true, user: fromCookie });
+      localStorage.setItem("kf-auth", JSON.stringify(fromCookie));
+      return;
     }
+
+    /* Sessions created before the cookie existed: adopt them and write the
+       cookie back, otherwise the middleware would bounce this browser to
+       /login while the client insists it is signed in. */
+    const raw = localStorage.getItem("kf-auth");
+    if (!raw) return;
+    try {
+      const user = JSON.parse(raw) as SessionUser;
+      if (typeof user?.name === "string" && typeof user?.email === "string") {
+        set({ isAuthenticated: true, user });
+        writeAuthCookie(user);
+      }
+    } catch { /* ignore malformed payloads */ }
   },
 }));
 
