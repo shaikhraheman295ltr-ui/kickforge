@@ -1,26 +1,53 @@
-"use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import LoginBackground from "@/components/LoginBackground";
-import LoginForm from "@/components/LoginForm";
-import { useAuthStore } from "@/lib/store";
+import "./brutalist.css";
+import BrutalistLogin from "./BrutalistLogin";
+
+export const metadata = {
+  title: "Sign in — KICKFORGE",
+  description: "Sign in to your KICKFORGE account, or create one for early access to drops.",
+};
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { isAuthenticated, checkSession } = useAuthStore();
-
-  useEffect(() => { checkSession(); }, [checkSession]);
-  useEffect(() => { if (isAuthenticated) router.push("/"); }, [isAuthenticated, router]);
-
   return (
-    <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden" style={{ backgroundColor: "var(--background)" }}>
-      <LoginBackground />
-      <div className="relative z-10 w-full max-w-[420px] px-4 py-8">
-        <LoginForm />
-        <p className="text-center mt-6" style={{ fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "var(--muted)", letterSpacing: "0.15em" }}>
-          KICKFORGE &mdash; WHERE MOTION MEETS CRAFT
-        </p>
-      </div>
+    <div className="kf-brutalist">
+      <main className="shell" id="main-content">
+        {/* ─────────────  Poster / brand side (decorative)  ───────────── */}
+        <section className="poster" aria-hidden="true">
+          <div className="poster__grid" />
+
+          <div className="poster__top">
+            <span className="brandmark">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="M5 4v16M5 12l10-8M5 12l10 8" strokeLinecap="square" />
+              </svg>
+              KICKFORGE
+            </span>
+            <span className="poster__meta">EST. 2026 / DROP 04</span>
+          </div>
+
+          <h2 className="poster__type">
+            <span>WHERE</span>
+            <span className="is-accent">MOTION</span>
+            <span>MEETS CRAFT</span>
+          </h2>
+
+          <div className="sticker">
+            ACCOUNT
+            <br />
+            ACCESS
+          </div>
+
+          <ul className="poster__list">
+            <li><b>01</b> Member-only drops</li>
+            <li><b>02</b> Order tracking</li>
+            <li><b>03</b> Early access windows</li>
+          </ul>
+        </section>
+
+        {/* ─────────────  Form side  ───────────── */}
+        <section className="panel">
+          <BrutalistLogin />
+        </section>
+      </main>
     </div>
   );
 }
