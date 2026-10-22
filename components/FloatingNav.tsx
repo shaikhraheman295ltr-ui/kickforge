@@ -117,7 +117,7 @@ export default function FloatingNav() {
     >
       {isDesktop ? (
         <div className="flex items-center gap-1 px-2 py-2 rounded-full glass">
-          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/login"); }} className="font-mono text-[var(--accent)] text-xs tracking-widest px-3 mr-2 font-bold hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-display)", fontSize: "18px", background: "none", border: "none", cursor: "pointer", pointerEvents: "auto" }}>KF</button>
+          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push("/login?force=1"); }} className="font-mono text-[var(--accent)] text-xs tracking-widest px-3 mr-2 font-bold hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-display)", fontSize: "18px", background: "none", border: "none", cursor: "pointer", pointerEvents: "auto" }}>KF</button>
           {NAV_ITEMS.map(item => (
             <button key={item.href} onClick={() => navTo(item.href)} aria-label={`Navigate to ${item.label}`}
               className={cn("relative px-4 py-2 rounded-full text-[10px] font-medium tracking-[0.18em] transition-all duration-300 cursor-pointer",

@@ -15,9 +15,13 @@ export function middleware(request: NextRequest) {
   const hasSession = Boolean(request.cookies.get(AUTH_COOKIE)?.value);
   const { pathname, search } = request.nextUrl;
 
-  /* Already signed in — the login page has nothing to offer. */
+  /* Already signed in — bounce away from /login, unless the request explicitly
+     asked for it (`?force=1`, e.g. the corner KF logo). Without that param a
+     signed-in click on the logo would land on /login and instantly come back,
+     which reads as a dead link. */
   if (pathname === "/login") {
-    if (!hasSession) return NextResponse.next();
+    const forced = request.nextUrl.searchParams.get("force") === "1";
+    if (!hasSession || forced) return NextResponse.next();
     const url = request.nextUrl.clone();
     url.pathname = "/";
     url.search = "";

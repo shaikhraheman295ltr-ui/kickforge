@@ -69,7 +69,10 @@ export default function BrutalistLogin() {
   const justAuthedRef = useRef(false);
   useEffect(() => { checkSession(); }, [checkSession]);
   useEffect(() => {
-    if (isAuthenticated && !justAuthedRef.current) router.replace(safeNext());
+    /* `?force=1` (corner KF logo) means "show me the login page even when I am
+       already signed in" — respect it and skip the auto-bounce. */
+    const forced = new URLSearchParams(window.location.search).get("force") === "1";
+    if (isAuthenticated && !justAuthedRef.current && !forced) router.replace(safeNext());
   }, [isAuthenticated, router]);
 
   const loading = status === "loading";

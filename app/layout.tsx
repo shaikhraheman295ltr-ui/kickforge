@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <a className="skip-link" href="#main-content">Skip to content</a>
-        <Link href="/login" aria-label="KF — go to login" className="fixed top-6 left-6 z-[600] group">
+        <Link href="/login?force=1" aria-label="KF — go to login" className="fixed top-6 left-6 z-[600] group">
           <span style={{
             display: "inline-flex",
             alignItems: "center",
