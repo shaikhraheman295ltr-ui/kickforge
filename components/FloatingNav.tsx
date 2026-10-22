@@ -115,7 +115,7 @@ export default function FloatingNav() {
     >
       {isDesktop ? (
         <div className="flex items-center gap-1 px-2 py-2 rounded-full glass">
-          <span className="font-mono text-[var(--accent)] text-xs tracking-widest px-3 mr-2 font-bold" style={{ fontFamily: "var(--font-display)", fontSize: "18px" }}>KF</span>
+          <button onClick={() => { window.location.href = "/login"; }} className="font-mono text-[var(--accent)] text-xs tracking-widest px-3 mr-2 font-bold hover:opacity-80 transition-opacity" style={{ fontFamily: "var(--font-display)", fontSize: "18px", background: "none", border: "none", cursor: "pointer" }}>KF</button>
           {NAV_ITEMS.map(item => (
             <button key={item.href} onClick={() => navTo(item.href)} aria-label={`Navigate to ${item.label}`}
               className={cn("relative px-4 py-2 rounded-full text-[10px] font-medium tracking-[0.18em] transition-all duration-300 cursor-pointer",
