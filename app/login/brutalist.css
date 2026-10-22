@@ -408,6 +408,25 @@
 .kf-brutalist .btn--ghost:hover { background: var(--ink); color: var(--background); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 0 var(--accent); }
 .kf-brutalist .btn--ghost:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 0 var(--ink); }
 
+/* Skip / continue as guest — deliberately the quietest control on the page */
+.kf-brutalist .btn--skip {
+  width: 100%;
+  background: transparent;
+  color: var(--muted);
+  border-color: var(--muted);
+  box-shadow: none;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+}
+.kf-brutalist .btn--skip:hover {
+  background: var(--muted);
+  border-color: var(--ink);
+  color: var(--background);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-sm);
+}
+.kf-brutalist .btn--skip:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 0 var(--ink); }
+
 .kf-brutalist .divider {
   display: flex;
   align-items: center;
@@ -576,6 +595,8 @@
   }
   .kf-brutalist .btn--primary:hover,
   .kf-brutalist .btn--ghost:hover,
+  .kf-brutalist .btn--skip:hover,
   .kf-brutalist .btn--primary:active,
-  .kf-brutalist .btn--ghost:active { transform: none; }
+  .kf-brutalist .btn--ghost:active,
+  .kf-brutalist .btn--skip:active { transform: none; }
 }

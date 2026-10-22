@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store";
+import { writeAuthCookie } from "@/lib/authCookie";
 
 type Mode = "login" | "signup";
 type FieldErrors = {
@@ -202,6 +203,15 @@ export default function BrutalistLogin() {
   };
 
   /* ------------------------------------------------------------------- skip */
+
+  const onSkip = () => {
+    // The gate requires a cookie; mint a guest session so middleware lets us through.
+    writeAuthCookie({ name: "Guest", email: "guest@kickforge.local" });
+    if (typeof window !== "undefined") {
+      localStorage.setItem("kf-auth", JSON.stringify({ name: "Guest", email: "guest@kickforge.local" }));
+    }
+    router.push("/");
+  };
 
   const onForgot = () =>
     setAlert("Password reset is not connected in this demo.");
@@ -456,7 +466,13 @@ export default function BrutalistLogin() {
         </button>
       </div>
 
-      {/* Login is mandatory — there is no way around this page. */}
+      {/* Skip — leave without signing in */}
+      <button className="btn btn--skip" type="button" onClick={onSkip} id="skip-btn">
+        Continue as guest
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+          <path d="M5 12h14M13 5l7 7-7 7" strokeLinecap="square" />
+        </svg>
+      </button>
 
       <p className="footer-note">
         {isSignup ? "Already have an account?" : "No account yet?"}
