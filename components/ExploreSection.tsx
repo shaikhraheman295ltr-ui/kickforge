@@ -79,14 +79,17 @@ export default function ExploreSection() {
         {filtered.map(product => (
           <div key={product.id} className="break-inside-avoid mb-4 group relative rounded-xl overflow-hidden"
             style={{ backgroundColor: "var(--background)", border: "1px solid var(--border)" }}
-            role="button" tabIndex={0} aria-label={`View ${product.name}`} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(product); } }}
+            /* No explicit aria-label: WCAG 2.5.3 requires the accessible name to
+               contain the card's visible text, and a "View X" label would not.
+               Letting the name derive from the content keeps them identical. */
+            role="button" tabIndex={0} onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(product); } }}
             onClick={() => openModal(product)}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <Image src={product.image} alt={product.name} width={600} height={400} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" loading="lazy" className="w-full object-cover transition-transform duration-500 group-hover:scale-105" />
             <div className="p-4">
               <div className="flex items-center justify-between">
                 <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "var(--ink)", letterSpacing: "0.04em" }}>{product.name}</h3>
-                {product.onSale && <span style={{ backgroundColor: "var(--accent-2)", color: "#fff", fontSize: "0.6rem", fontFamily: "var(--font-mono)", padding: "2px 8px", borderRadius: "4px", letterSpacing: "0.1em" }}>SALE</span>}
+                {product.onSale && <span style={{ backgroundColor: "var(--accent-2)", color: "#0A0A0F", fontSize: "0.6rem", fontFamily: "var(--font-mono)", padding: "2px 8px", borderRadius: "4px", letterSpacing: "0.1em" }}>SALE</span>}
               </div>
               <div className="flex items-center gap-3 mt-1">
                 {product.onSale && product.salePrice && <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent)", fontSize: "0.95rem" }}>${product.salePrice}</span>}

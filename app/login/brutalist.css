@@ -15,10 +15,6 @@
   --shadow-accent: 6px 6px 0 0 var(--accent);
   --shadow-error: 4px 4px 0 0 var(--accent-2);
 
-  /* NOTE: globals.css uses #6B7280 here, which is 4.3:1 on --background and
-     fails WCAG AA for small text. Lightened to #8A8A99 (5.8:1) on this page. */
-  --muted: #8A8A99;
-
   --dur: 120ms;
   --step: cubic-bezier(0.2, 0, 0, 1);
 

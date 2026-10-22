@@ -6,11 +6,16 @@
   --background: #0A0A0F;
   --surface: #12121A;
   --surface-2: #1E1E2A;
-  --accent: #8B5CF6;
+  /* --accent is the brand violet (Tailwind violet-400). The original #8B5CF6
+     (violet-500) measured 4.39:1 on --surface, below the WCAG AA 4.5:1 floor
+     for the card labels that use it as text color. */
+  --accent: #A78BFA;
   --accent-2: #EC4899;
   --accent-3: #6EE7B7;
   --ink: #FFFFFF;
-  --muted: #6B7280;
+  /* #6B7280 measured 3.4:1 on --surface-2 — muted text is used for prices,
+     categories and filter buttons, so the token itself must clear AA. */
+  --muted: #9CA3AF;
   --border: rgba(255,255,255,0.06);
   --glass: rgba(255,255,255,0.04);
 

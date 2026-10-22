@@ -15,7 +15,7 @@ export default function GlobalError({
   return (
     <div style={{ padding: 40, color: "#fff", background: "#0A0A0F", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "system-ui, sans-serif" }}>
       <h1 style={{ fontSize: "3rem", fontWeight: 700, letterSpacing: "0.04em", margin: 0 }}>SOMETHING BROKE</h1>
-      <p style={{ color: "#8B5CF6", fontFamily: "monospace", marginTop: 12, fontSize: "0.85rem" }}>
+      <p style={{ color: "#A78BFA", fontFamily: "monospace", marginTop: 12, fontSize: "0.85rem" }}>
         {error.message || "An unexpected error occurred"}
       </p>
       {error.digest && (

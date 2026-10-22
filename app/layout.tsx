@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Inter, Space_Mono } from "next/font/google";
-import "./globals.css";
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/react";
+import "./globals.css";
 
 // Self-hosted via next/font: font files are served from our own origin and the
 // @font-face CSS is inlined at build time. This removes the render-blocking
@@ -50,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <a className="skip-link" href="#main-content">Skip to content</a>
-        <Link href="/login" aria-label="Go to login" className="fixed top-6 left-6 z-[600] group">
+        <Link href="/login" aria-label="KF — go to login" className="fixed top-6 left-6 z-[600] group">
           <span style={{
             display: "inline-flex",
             alignItems: "center",
@@ -73,6 +74,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </span>
         </Link>
         {children}
+        {/* Vercel Web Analytics — no-ops on localhost, collects nothing in dev. */}
+        <Analytics />
       </body>
     </html>
   );

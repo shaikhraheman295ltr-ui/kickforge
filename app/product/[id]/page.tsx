@@ -34,7 +34,7 @@ export default function ProductPage() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--background)" }}>
+    <main id="main-content" className="min-h-screen" style={{ backgroundColor: "var(--background)" }}>
       <div className="max-w-7xl mx-auto px-6 py-8">
         <button onClick={() => router.back()} className="flex items-center gap-2 text-sm cursor-pointer" style={{ fontFamily: "var(--font-mono)", color: "var(--muted)", letterSpacing: "0.1em" }}>
           <ArrowLeft size={16} /> BACK
@@ -111,6 +111,6 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

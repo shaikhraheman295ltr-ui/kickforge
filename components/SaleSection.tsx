@@ -85,7 +85,7 @@ export default function SaleSection() {
             aria-label={`${p.name} on sale. Press Enter to grab deal.`}
             onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (!isAuthenticated) { openLogin({ id: p.id, name: p.name, price: p.salePrice ?? p.price, image: p.image, size: p.sizes[0], quantity: 1 }); return; } addItem({ id: p.id, name: p.name, price: p.salePrice ?? p.price, image: p.image, size: p.sizes[0], quantity: 1 }); openCart(); } }}
             className="relative rounded-xl overflow-hidden group" style={{ backgroundColor: "var(--surface)", border: "1px solid rgba(255,45,45,0.2)" }}>
-            <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full" style={{ backgroundColor: "var(--accent-2)", fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "#fff", letterSpacing: "0.1em" }}>
+            <div className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full" style={{ backgroundColor: "var(--accent-2)", fontFamily: "var(--font-mono)", fontSize: "0.65rem", color: "#0A0A0F", letterSpacing: "0.1em" }}>
               -{Math.round(((p.price - (p.salePrice ?? p.price)) / p.price) * 100)}% OFF
             </div>
             <Image src={p.image} alt={p.name} width={600} height={600} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" loading="lazy" className="w-full aspect-square object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -98,7 +98,7 @@ export default function SaleSection() {
               <button onClick={() => { if (!isAuthenticated) { openLogin({ id: p.id, name: p.name, price: p.salePrice ?? p.price, image: p.image, size: p.sizes[0], quantity: 1 }); return; } addItem({ id: p.id, name: p.name, price: p.salePrice ?? p.price, image: p.image, size: p.sizes[0], quantity: 1 }); openCart(); }}
                 aria-label={`Grab deal on ${p.name}`}
                 className="mt-4 w-full py-3 rounded-lg font-bold text-xs tracking-widest transition-all hover:opacity-90 cursor-pointer"
-                style={{ backgroundColor: "var(--accent-2)", color: "#fff", fontFamily: "var(--font-mono)" }}>
+                style={{ backgroundColor: "var(--accent-2)", color: "#0A0A0F", fontFamily: "var(--font-mono)" }}>
                 GRAB DEAL
               </button>
             </div>
