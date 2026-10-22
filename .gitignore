@@ -29,3 +29,9 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# local QA run artifacts
+lh-*.json
+headers.json
+server.log
+server.err
