@@ -15,12 +15,12 @@ export default function LoginPage() {
           <div className="poster__grid" />
 
           <div className="poster__top">
-            <span className="brandmark">
+            <a className="brandmark" href="/" style={{ textDecoration: "none", color: "inherit" }}>
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="3">
                 <path d="M5 4v16M5 12l10-8M5 12l10 8" strokeLinecap="square" />
               </svg>
               KICKFORGE
-            </span>
+            </a>
             <span className="poster__meta">EST. 2026 / DROP 04</span>
           </div>
 
