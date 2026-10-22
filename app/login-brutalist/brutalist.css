@@ -1,0 +1,509 @@
+/* ============================================================================
+   KICKFORGE — Brutalist login  (/login-brutalist)
+   Palette/font tokens are inherited from app/globals.css + the next/font
+   variables on <html>. Every rule is scoped under .kf-brutalist so nothing
+   leaks into the rest of the app.
+   ========================================================================== */
+
+.kf-brutalist {
+  /* Brutalist geometry */
+  --bw: 3px;                    /* border weight */
+  --bw-thick: 5px;
+  --shadow: 6px 6px 0 0 var(--ink);
+  --shadow-sm: 4px 4px 0 0 var(--ink);
+  --shadow-accent: 6px 6px 0 0 var(--accent);
+  --shadow-error: 4px 4px 0 0 var(--accent-2);
+
+  /* NOTE: globals.css uses #6B7280 here, which is 4.3:1 on --background and
+     fails WCAG AA for small text. Lightened to #8A8A99 (5.8:1) on this page. */
+  --muted: #8A8A99;
+
+  --dur: 120ms;
+  --step: cubic-bezier(0.2, 0, 0, 1);
+
+  min-height: 100svh;
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------- a11y base */
+
+/* One consistent, high-contrast focus indicator everywhere.
+   Mint is 12.6:1 on the background and reads on top of the purple button too.
+   The control selectors are listed explicitly so they outrank the global
+   `input:focus-visible { outline: 2px solid var(--accent) }` rule in
+   globals.css on specificity alone, not on stylesheet order. */
+.kf-brutalist :focus-visible,
+.kf-brutalist button:focus-visible,
+.kf-brutalist a:focus-visible,
+.kf-brutalist input:focus-visible,
+.kf-brutalist select:focus-visible,
+.kf-brutalist textarea:focus-visible,
+.kf-brutalist [role="button"]:focus-visible {
+  outline: var(--bw) solid var(--accent-3);
+  outline-offset: 3px;
+}
+/* Kill the mouse-only ring so the two do not double up */
+.kf-brutalist :focus:not(:focus-visible) { outline: none; }
+
+/* ---------------------------------------------------------------- shell/grid */
+
+.kf-brutalist .shell {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 100svh;
+}
+
+/* Exposed grid structure, drawn on the page itself */
+.kf-brutalist .poster__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------- poster */
+
+.kf-brutalist .poster {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  border-bottom: var(--bw-thick) solid var(--ink);
+  padding: 1.5rem 1.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  isolation: isolate;
+}
+
+.kf-brutalist .poster__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.kf-brutalist .brandmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  letter-spacing: 0.14em;
+  background: var(--ink);
+  color: var(--background);
+  padding: 0.25rem 0.6rem;
+  border: var(--bw) solid var(--ink);
+}
+
+.kf-brutalist .poster__meta,
+.kf-brutalist .eyebrow,
+.kf-brutalist .label,
+.kf-brutalist .hint,
+.kf-brutalist .demo-note,
+.kf-brutalist .poster__list,
+.kf-brutalist .poster__list b {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+}
+
+.kf-brutalist .poster__meta {
+  font-size: 0.6rem;
+  color: var(--muted);
+}
+
+.kf-brutalist .poster__type {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 15vw, 6.5rem);
+  line-height: 0.84;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+}
+
+.kf-brutalist .poster__type .is-accent {
+  color: var(--accent);
+  text-shadow: var(--shadow);
+}
+
+.kf-brutalist .sticker {
+  align-self: flex-start;
+  transform: rotate(-3deg);
+  background: var(--accent-2);
+  color: var(--background);
+  border: var(--bw) solid var(--ink);
+  box-shadow: var(--shadow-sm);
+  padding: 0.4rem 0.8rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  line-height: 1.25;
+}
+
+.kf-brutalist .poster__list {
+  list-style: none;
+  font-size: 0.62rem;
+  color: var(--muted);
+  display: grid;
+  gap: 0.4rem;
+  margin-top: auto;
+}
+.kf-brutalist .poster__list b { color: var(--accent-3); margin-right: 0.5rem; }
+
+/* ----------------------------------------------------------------------- panel */
+
+.kf-brutalist .panel {
+  background: var(--background);
+  padding: 2rem 1.25rem calc(2.5rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 560px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.kf-brutalist .eyebrow {
+  font-size: 0.62rem;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.kf-brutalist .title {
+  font-family: var(--font-display);
+  font-size: clamp(3.25rem, 18vw, 5.5rem);
+  line-height: 0.85;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+
+.kf-brutalist .lede {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  max-width: 42ch;
+}
+
+/* ------------------------------------------------------------------ form bits */
+
+.kf-brutalist .login-form { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.kf-brutalist .field { display: flex; flex-direction: column; gap: 0.45rem; }
+
+.kf-brutalist .label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  gap: 0.35rem;
+}
+.kf-brutalist .req { color: var(--accent-2); text-decoration: none; }
+
+.kf-brutalist .input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0.85rem 1rem;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 1rem;              /* >=16px prevents iOS zoom-on-focus */
+  border: var(--bw) solid var(--ink);
+  border-radius: 0;
+  transition: background var(--dur) var(--step), box-shadow var(--dur) var(--step);
+  -webkit-appearance: none;
+  appearance: none;
+}
+.kf-brutalist .input::placeholder { color: var(--muted); }
+
+.kf-brutalist .input:hover { background: #262636; }
+
+.kf-brutalist .input:focus {
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.kf-brutalist .hint { font-size: 0.58rem; color: var(--muted); letter-spacing: 0.16em; }
+
+/* Password + toggle */
+.kf-brutalist .pw { position: relative; display: flex; }
+.kf-brutalist .pw .input { padding-right: 3.5rem; }
+
+.kf-brutalist .pw__toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 52px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: var(--ink);
+  border: 0;
+  border-left: var(--bw) solid var(--ink);
+  cursor: pointer;
+}
+.kf-brutalist .pw__toggle:hover { background: var(--accent); color: var(--background); }
+.kf-brutalist .pw__toggle[aria-pressed="true"] { background: var(--accent-3); color: var(--background); }
+
+.kf-brutalist .ico--eye-off { display: none; }
+.kf-brutalist .pw__toggle[aria-pressed="true"] .ico--eye { display: none; }
+.kf-brutalist .pw__toggle[aria-pressed="true"] .ico--eye-off { display: block; }
+
+/* Row: remember + forgot */
+.kf-brutalist .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.kf-brutalist .check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.kf-brutalist .check input { position: absolute; opacity: 0; width: 0; height: 0; }
+.kf-brutalist .check__box {
+  width: 20px;
+  height: 20px;
+  border: var(--bw) solid var(--ink);
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: background var(--dur) var(--step);
+}
+.kf-brutalist .check__box::after {
+  content: "";
+  width: 10px;
+  height: 10px;
+  background: var(--background);
+  transform: scale(0);
+  transition: transform var(--dur) var(--step);
+}
+.kf-brutalist .check input:checked + .check__box { background: var(--accent-3); }
+.kf-brutalist .check input:checked + .check__box::after { transform: scale(1); }
+.kf-brutalist .check input:focus-visible + .check__box { outline: var(--bw) solid var(--accent-3); outline-offset: 3px; }
+
+/* Links */
+.kf-brutalist .link {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 2px;
+  transition: color var(--dur) var(--step), background var(--dur) var(--step);
+}
+.kf-brutalist .link:hover,
+.kf-brutalist .link:focus-visible { background: var(--accent); color: var(--background); text-decoration-style: solid; }
+.kf-brutalist .link--bold { font-weight: 700; color: var(--accent-3); }
+
+/* ------------------------------------------------------------------ buttons */
+
+.kf-brutalist .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 54px;
+  padding: 0.9rem 1.25rem;
+  border: var(--bw) solid var(--ink);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform var(--dur) var(--step), box-shadow var(--dur) var(--step),
+    background var(--dur) var(--step), color var(--dur) var(--step);
+}
+
+.kf-brutalist .btn--primary {
+  width: 100%;
+  background: var(--accent);
+  color: var(--background);          /* black on #8B5CF6 = 4.7:1 (AA) */
+  box-shadow: var(--shadow);
+}
+.kf-brutalist .btn--primary:hover { background: var(--accent-2); transform: translate(-2px, -2px); box-shadow: 8px 8px 0 0 var(--ink); }
+.kf-brutalist .btn--primary:active { transform: translate(4px, 4px); box-shadow: 2px 2px 0 0 var(--ink); }
+
+.kf-brutalist .btn--primary[data-loading="true"] { cursor: progress; opacity: 0.85; }
+.kf-brutalist .btn--primary[data-loading="true"] .btn__label::after {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  text-align: left;
+  animation: kf-dots 1.1s steps(4, end) infinite;
+}
+@keyframes kf-dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+
+.kf-brutalist .btn--ghost {
+  flex: 1 1 0;
+  background: transparent;
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+}
+.kf-brutalist .btn--ghost:hover { background: var(--ink); color: var(--background); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 0 var(--accent); }
+.kf-brutalist .btn--ghost:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 0 var(--ink); }
+
+.kf-brutalist .divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  color: var(--muted);
+}
+.kf-brutalist .divider::before,
+.kf-brutalist .divider::after { content: ""; flex: 1; height: var(--bw); background: var(--ink); opacity: 0.5; }
+
+.kf-brutalist .social { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+.kf-brutalist .footer-note {
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-top: var(--bw) solid var(--ink);
+  padding-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.kf-brutalist .demo-note {
+  font-size: 0.55rem;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+}
+.kf-brutalist .demo-note code { color: var(--accent-3); }
+
+/* ---------------------------------------------------------------- error state */
+
+.kf-brutalist .alert {
+  border: var(--bw) solid var(--accent-2);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-error);
+  padding: 0.85rem 1rem;
+  color: #FFC2E0;                    /* pink-tinted, 10.6:1 on --surface-2 */
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+.kf-brutalist .alert::before { content: "! "; font-weight: 700; color: var(--accent-2); }
+
+.kf-brutalist .field-error {
+  color: #FFC2E0;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+}
+
+.kf-brutalist .field.is-invalid .input {
+  border-color: var(--accent-2);
+  box-shadow: var(--shadow-error);
+}
+.kf-brutalist .field.is-invalid .label { color: var(--accent-2); }
+
+/* Optional shake on invalid submit */
+.kf-brutalist .field.is-invalid,
+.kf-brutalist .alert { animation: kf-shake 260ms var(--step) both; }
+@keyframes kf-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+/* --------------------------------------------------------------------- toast */
+
+.kf-brutalist .toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 50;
+  background: var(--accent-3);
+  color: var(--background);
+  border: var(--bw) solid var(--ink);
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  max-width: calc(100vw - 2rem);
+}
+
+/* ------------------------------------------------------------------ tablet */
+
+@media (min-width: 768px) {
+  .kf-brutalist .poster { padding: 2rem; border-bottom-width: 0; border-right: var(--bw-thick) solid var(--ink); }
+  .kf-brutalist .panel { padding: 3rem 2.5rem; }
+  .kf-brutalist .poster__type { font-size: clamp(4rem, 9vw, 7rem); }
+  .kf-brutalist .title { font-size: clamp(3.5rem, 8vw, 5rem); }
+}
+
+/* ----------------------------------------------------------------- desktop */
+
+@media (min-width: 1024px) {
+  .kf-brutalist .shell { grid-template-columns: 1.05fr 0.95fr; }
+
+  .kf-brutalist .poster {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    padding: 2.5rem;
+  }
+  .kf-brutalist .poster__type { font-size: clamp(4.5rem, 6.5vw, 8.5rem); }
+
+  .kf-brutalist .panel {
+    max-width: 520px;
+    justify-content: center;
+    padding: 3.5rem 3rem;
+  }
+  .kf-brutalist .btn--primary { box-shadow: var(--shadow-accent); }
+  .kf-brutalist .btn--primary:hover { box-shadow: 8px 8px 0 0 var(--accent-3); }
+}
+
+/* ------------------------------------------------------ reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .kf-brutalist *,
+  .kf-brutalist *::before,
+  .kf-brutalist *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .kf-brutalist .btn--primary:hover,
+  .kf-brutalist .btn--ghost:hover,
+  .kf-brutalist .btn--primary:active,
+  .kf-brutalist .btn--ghost:active { transform: none; }
+}
